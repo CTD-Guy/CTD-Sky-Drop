@@ -478,6 +478,142 @@ function drawJumper(p, landed) {
   ctx.stroke();
   ctx.restore();
 }
+function saloonSpot() {
+  const outer = rings()[rings().length - 1].r;
+  const GAP = 28, SOCK = 54, MAXW = 168, MINW = 128;
+  const keepL = R.tx - outer - GAP, keepR = R.tx + outer + GAP;
+  const sock = R.tx < 400 ? 700 : 100;
+  function place(side) {
+    let L = side < 0 ? 16 : keepR;
+    let Rgt = side < 0 ? keepL : W - 16;
+    if (Rgt - L < MINW) return null;
+    if (sock > L && sock < Rgt) {
+      const leftRoom = sock - SOCK - L, rightRoom = Rgt - (sock + SOCK);
+      const takeLeft = leftRoom >= rightRoom ? leftRoom >= MINW : rightRoom < MINW && leftRoom >= MINW;
+      if (takeLeft) Rgt = sock - SOCK;
+      else if (rightRoom >= MINW) L = sock + SOCK;
+      else return null;
+    }
+    if (Rgt - L < MINW) return null;
+    const w = Math.min(MAXW, Rgt - L);
+    const x = side < 0 ? L : Rgt - w;
+    if (x < keepR && x + w > keepL) return null;
+    if (sock > x - 8 && sock < x + w + 8) return null;
+    return { x: x, w: w, side: side, room: Rgt - L };
+  }
+  let spot = R.saloonSide ? place(R.saloonSide) : null;
+  if (!spot) {
+    const a = place(-1), b = place(1);
+    spot = a && b ? (a.room >= b.room ? a : b) : (a || b);
+  }
+  if (!spot) {
+    const side = R.tx >= W / 2 ? -1 : 1;
+    spot = { x: side < 0 ? 12 : W - 12 - MINW, w: MINW, side: side, room: 0 };
+  }
+  R.saloonSide = spot.side;
+  R.saloonX = spot.x;
+  R.saloonW = spot.w;
+  return spot;
+}
+function drawSaloon(gy, spot) {
+  const x = spot.x, w = spot.w, base = gy;
+  const frontTop = base - 176, wallTop = base - 124;
+  ctx.fillStyle = "rgba(90,50,20,.28)";
+  ctx.beginPath(); ctx.ellipse(x + w / 2, base + 5, w * 0.46, 7, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = "#8d552c";
+  ctx.fillRect(x + 4, wallTop, w - 8, base - wallTop);
+  ctx.fillStyle = "#6b3f20";
+  for (let i = 0; i < 5; i++) ctx.fillRect(x + 4, wallTop + 16 + i * 20, w - 8, 3);
+  ctx.fillStyle = "#7a4a26";
+  ctx.beginPath();
+  ctx.moveTo(x, wallTop + 6);
+  ctx.lineTo(x, frontTop + 34);
+  ctx.lineTo(x + w * 0.22, frontTop + 16);
+  ctx.lineTo(x + w * 0.5, frontTop);
+  ctx.lineTo(x + w * 0.78, frontTop + 16);
+  ctx.lineTo(x + w, frontTop + 34);
+  ctx.lineTo(x + w, wallTop + 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#4a2c16"; ctx.lineWidth = 3; ctx.stroke();
+  const signW = Math.min(w - 24, 138), signH = 30;
+  const signX = x + (w - signW) / 2, signY = frontTop + 40;
+  ctx.fillStyle = "#24160f";
+  ctx.fillRect(signX, signY, signW, signH);
+  ctx.strokeStyle = "#ffcf33"; ctx.lineWidth = 2;
+  ctx.strokeRect(signX + 2, signY + 2, signW - 4, signH - 4);
+  let fontPx = w > 150 ? 20 : 16;
+  ctx.fillStyle = "#ffcf33";
+  ctx.font = "bold " + fontPx + "px system-ui,sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  while (fontPx > 12 && ctx.measureText("SALOON").width > signW - 14) {
+    fontPx -= 1;
+    ctx.font = "bold " + fontPx + "px system-ui,sans-serif";
+  }
+  ctx.fillText("SALOON", signX + signW / 2, signY + signH / 2 + 1);
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  function pane(wx) {
+    const ww = Math.max(16, Math.min(24, w * 0.13));
+    ctx.fillStyle = "#3d2616"; ctx.fillRect(wx - 2, wallTop + 14, ww + 4, 32);
+    ctx.fillStyle = "#ffe08a"; ctx.fillRect(wx, wallTop + 16, ww, 28);
+    ctx.strokeStyle = "#6b3f20"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wx + ww / 2, wallTop + 16); ctx.lineTo(wx + ww / 2, wallTop + 44);
+    ctx.moveTo(wx, wallTop + 30); ctx.lineTo(wx + ww, wallTop + 30);
+    ctx.stroke();
+  }
+  pane(x + 14);
+  pane(x + w - 14 - Math.max(16, Math.min(24, w * 0.13)));
+  const porchY = wallTop + 56;
+  ctx.fillStyle = "#5c341c";
+  ctx.beginPath();
+  ctx.moveTo(x + 8, porchY); ctx.lineTo(x + w - 8, porchY);
+  ctx.lineTo(x + w - 2, porchY + 12); ctx.lineTo(x + 2, porchY + 12);
+  ctx.fill();
+  ctx.fillStyle = "#4a2e1a";
+  ctx.fillRect(x + 12, porchY + 10, 6, base - porchY - 10);
+  ctx.fillRect(x + w - 18, porchY + 10, 6, base - porchY - 10);
+  const doorTop = porchY + 12, doorH = base - doorTop - 2;
+  const dw = Math.min(24, (w - 48) / 2), mid = x + w / 2;
+  ctx.fillStyle = "#1a100c";
+  ctx.fillRect(mid - dw, doorTop, dw * 2, doorH);
+  const flap = 0.28 + 0.72 * (0.5 + 0.5 * Math.sin(performance.now() / 280));
+  function leaf(hinge, dir) {
+    ctx.save();
+    ctx.translate(hinge, doorTop);
+    ctx.scale(flap, 1);
+    ctx.fillStyle = "#7a4a28";
+    ctx.fillRect(dir < 0 ? -dw : 0, 0, dw, doorH);
+    ctx.fillStyle = "#e7c08a";
+    ctx.fillRect(dir < 0 ? -dw + 3 : 3, 6, dw - 6, 4);
+    ctx.fillRect(dir < 0 ? -dw + 3 : 3, doorH * 0.42, dw - 6, 4);
+    ctx.fillRect(dir < 0 ? -dw + 3 : 3, doorH - 12, dw - 6, 4);
+    ctx.restore();
+  }
+  leaf(mid - dw, 1);
+  leaf(mid + dw, -1);
+  ctx.fillStyle = "#c4925a";
+  ctx.fillRect(x + 6, base - 5, w - 12, 5);
+  const outerLeft = x + w / 2 < R.tx;
+  const railX = outerLeft ? x + 10 : x + w - 36;
+  const railHitsDoor = railX < mid + dw + 6 && railX + 26 > mid - dw - 6;
+  if (!railHitsDoor) {
+    ctx.strokeStyle = "#4a2e1a"; ctx.lineWidth = 4; ctx.lineCap = "butt";
+    ctx.beginPath();
+    ctx.moveTo(railX, base); ctx.lineTo(railX, base - 30);
+    ctx.moveTo(railX + 24, base); ctx.lineTo(railX + 24, base - 30);
+    ctx.moveTo(railX - 2, base - 24); ctx.lineTo(railX + 26, base - 24);
+    ctx.stroke();
+  }
+  const cactusX = outerLeft ? x - 16 : x + w + 12;
+  const outerR = rings()[rings().length - 1].r;
+  if (cactusX > 12 && cactusX < W - 12 && Math.abs(cactusX - R.tx) > outerR + 18 && Math.abs(cactusX - (R.tx < 400 ? 700 : 100)) > 28) {
+    ctx.fillStyle = "#4f9a3c";
+    ctx.fillRect(cactusX - 4, base - 36, 8, 36);
+    ctx.fillRect(cactusX - 14, base - 26, 4, 12);
+    ctx.fillRect(cactusX + 6, base - 28, 4, 11);
+  }
+}
 function drawGround() {
   const gy = GROUND;
   const g = ctx.createLinearGradient(0, gy, 0, gy + 300);
@@ -488,8 +624,11 @@ function drawGround() {
   for (let x = -200; x <= W + 200; x += 50) ctx.lineTo(x, gy - 30 - Math.sin(x * 0.013) * 25 - Math.sin(x * 0.05) * 6);
   ctx.lineTo(W + 200, gy); ctx.fill();
   ctx.fillStyle = "#f0c27a"; ctx.fillRect(-200, gy, W + 400, 6);
+  const spot = saloonSpot();
+  drawSaloon(gy, spot);
   cacti.forEach(function (c) {
     if (Math.abs(c.x - R.tx) < 160) return;
+    if (c.x > spot.x - 14 && c.x < spot.x + spot.w + 14) return;
     ctx.fillStyle = "#4f9a3c";
     ctx.fillRect(c.x - 4, gy - c.h, 8, c.h);
     ctx.fillRect(c.x - 12, gy - c.h * 0.7, 4, 12);
