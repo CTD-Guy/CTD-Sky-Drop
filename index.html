@@ -156,6 +156,15 @@ canvas {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+#shopBtn{flex:none;width:220px;height:60px;font-size:22px;font-weight:700;border:none;border-radius:var(--radius-lg);background:#b8860b;color:#fff;cursor:pointer;touch-action:manipulation}
+#coinline{font-size:16px;margin-top:6px}
+#shop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;background:rgba(0,0,0,.55);color:#fff;padding:16px;box-sizing:border-box;border-radius:var(--radius-md);overflow-y:auto;touch-action:pan-y}
+#shop h2{font-size:26px;font-weight:800;margin:0}
+.upg{display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;max-width:420px;background:rgba(255,255,255,.1);border-radius:var(--radius-md);padding:8px;box-sizing:border-box;text-align:left}
+.upg .nm{flex:1 1 150px;min-width:0}.upg .t{font-size:16px;font-weight:700}.upg .lv{font-size:13px;opacity:.8}.upg .d{font-size:12px;opacity:.85}
+.upg button{height:48px;min-width:110px;font-size:16px;font-weight:700;border:none;border-radius:var(--radius-lg);background:#e0a800;color:#222;cursor:pointer;touch-action:manipulation}
+.upg button:disabled{background:#666;color:#bbb;opacity:.7;cursor:default}
+#shopBack{flex:none;width:200px;height:56px;margin-top:4px;font-size:24px;font-weight:700;border:none;border-radius:var(--radius-lg);background:var(--secondary);color:#fff;cursor:pointer}
 #mute[aria-pressed="true"] { opacity: .7; }
 .hidden { display: none !important; }
 </style>
@@ -167,13 +176,16 @@ canvas {
       <canvas id="c"></canvas>
       <div id="overlay">
         <h1>🪂 CTD's Sky Drop</h1>
-        <div id="blurb">Jump, steer through the wind, pop the chute in time and land on the bullseye. 5 jumps. Too fast = splat!</div>
+        <div id="blurb">Jump, steer through the wind, pop the chute in time and land on the bullseye. 5 jumps. Too fast = splat! Grab coins, ride updrafts, dodge birds.</div>
         <div id="scoreline" class="hidden"></div>
         <div id="jumps" class="hidden"></div>
+        <div id="coinline" class="hidden"></div>
         <div id="newhs" class="hidden"></div>
         <div id="hsline" class="hidden"></div>
         <button id="play" type="button">PLAY</button>
+        <button id="shopBtn" type="button">SHOP · 0 coins</button>
       </div>
+      <div id="shop" class="hidden"><h2>Upgrade Shop</h2><div id="bankline">Bank: <b>0</b> coins</div><div id="upgs" style="display:contents"></div><button id="shopBack" type="button">BACK</button></div>
       <button id="mute" type="button" aria-pressed="false" aria-label="Mute sound">🔊</button>
     </div>
     <div id="controls">
@@ -198,6 +210,28 @@ function saveHs(v) {
   memHs = v;
   try { window.localStorage.setItem(HS_KEY, String(v)); } catch (e) { /* ignore */ }
 }
+
+const BANK_KEY = "ctdSkyDropCoins", UPG_KEY = "ctdSkyDropUpg";
+let memBank = 0, memUpg = { chute: 0, steer: 0, magnet: 0, shield: 0 };
+function loadBank() { try { const v = Number(window.localStorage.getItem(BANK_KEY)); return isFinite(v) && v > 0 ? v : memBank; } catch (e) { return memBank; } }
+function saveBank(v) { memBank = v; try { window.localStorage.setItem(BANK_KEY, String(v)); } catch (e) { /* ignore */ } }
+function loadUpg() {
+  try {
+    const raw = window.localStorage.getItem(UPG_KEY);
+    if (!raw) return Object.assign({}, memUpg);
+    const o = JSON.parse(raw) || {};
+    const c = function (n) { const v = Number(n); return isFinite(v) ? Math.max(0, Math.min(3, Math.floor(v))) : 0; };
+    return { chute: c(o.chute), steer: c(o.steer), magnet: c(o.magnet), shield: c(o.shield) };
+  } catch (e) { return Object.assign({}, memUpg); }
+}
+function saveUpg(u) { memUpg = Object.assign({}, u); try { window.localStorage.setItem(UPG_KEY, JSON.stringify(u)); } catch (e) { /* ignore */ } }
+const UPGS = [
+  { k: "chute", name: "Bigger Chute", desc: "Softer canopy descent", prices: [20, 50, 100] },
+  { k: "steer", name: "Better Steering", desc: "More air control", prices: [20, 50, 100] },
+  { k: "magnet", name: "Coin Magnet", desc: "Bigger coin pickup radius", prices: [15, 40, 80] },
+  { k: "shield", name: "Bird Shield", desc: "+1 free bird hit per jump", prices: [25, 60, 120] }
+];
+let bank = loadBank(), upg = loadUpg(), runCoins = 0, shopOpen = false;
 
 const cv = document.getElementById("c");
 const ctx = cv.getContext("2d");
@@ -414,7 +448,11 @@ const sfx = {
   land: function () { tone(523, 0.12, "triangle", 0.25); later(function () { tone(659, 0.12, "triangle", 0.25); }, 110); later(function () { tone(784, 0.25, "triangle", 0.25); }, 220); },
   bull: function () { [523, 659, 784, 1047].forEach(function (f, i) { later(function () { tone(f, 0.18, "square", 0.12); }, i * 90); }); },
   crash: function () { noise(0.6, 0.6, 400); tone(300, 0.7, "sawtooth", 0.15, 60); later(function () { tone(900, 0.15, "sine", 0.15, 1400); }, 500); },
-  miss: function () { tone(300, 0.25, "triangle", 0.2, 200); later(function () { tone(200, 0.4, "triangle", 0.2, 120); }, 220); }
+  miss: function () { tone(300, 0.25, "triangle", 0.2, 200); later(function () { tone(200, 0.4, "triangle", 0.2, 120); }, 220); },
+  squawk: function () { tone(1300, 0.12, "sawtooth", 0.1, 650); later(function () { tone(1100, 0.14, "sawtooth", 0.09, 500); }, 110); },
+  coin: function () { tone(1320, 0.07, "square", 0.07); later(function () { tone(1980, 0.16, "square", 0.07); }, 60); },
+  shield: function () { tone(600, 0.2, "sine", 0.15, 1200); },
+  buy: function () { tone(880, 0.08, "square", 0.08); later(function () { tone(1320, 0.18, "square", 0.08); }, 80); }
 };
 
 let state = "menu", round = 0, total = 0, results = [], hs = loadHs();
@@ -437,14 +475,27 @@ function mkRound() {
     planeX: 0, wind: wind, gust: 0,
     tx: 250 + Math.random() * 300,
     tdir: round >= 3 ? (Math.random() < 0.5 ? -1 : 1) * (25 + (round - 3) * 25) : 0,
-    phase: "plane", t: 0, done: null, cam: 0, parts: []
+    phase: "plane", t: 0, done: null, cam: 0, parts: [],
+    birds: [], drafts: [], coins: [], got: 0, hits: 0, tumble: 0, hitCd: 0, liftT: 0, salX: 0, shield: 0
   };
   if (wind < 0) r.p.x += 200;
   r.planeX = r.p.x - 40;
   return r;
 }
+function populate(r) {
+  r.salX = r.tx < 400 ? 695 : 105;
+  const nb = 2 + round, bs = 70 + round * 18;
+  for (let i = 0; i < nb; i++) { const d = Math.random() < 0.5 ? -1 : 1; r.birds.push({ x: Math.random() * W, y: 500 + (i + Math.random() * 0.8) * ((GROUND - 1000) / nb), vx: d * (bs + Math.random() * 40), ph: Math.random() * 6 }); }
+  const nd = 2 + (round % 2);
+  for (let i = 0; i < nd; i++) { const top = 450 + Math.random() * 900; r.drafts.push({ x: 110 + Math.random() * 580, w: 80 + Math.random() * 40, top: top, bot: Math.min(GROUND - 450, top + 700 + Math.random() * 500) }); }
+  for (let i = 0; i < 6; i++) r.coins.push({ x: 60 + Math.random() * (W - 120), y: 400 + Math.random() * (GROUND - 900), got: false, ph: Math.random() * 6 });
+  r.drafts.forEach(function (d) { for (let j = 0; j < 2; j++) r.coins.push({ x: d.x + (Math.random() - 0.5) * d.w * 0.5, y: d.top + 80 + Math.random() * (d.bot - d.top - 160), got: false, ph: Math.random() * 6 }); });
+  r.birds.forEach(function (b) { if (Math.random() < 0.7) r.coins.push({ x: 60 + Math.random() * (W - 120), y: b.y + (Math.random() - 0.5) * 30, got: false, ph: Math.random() * 6 }); });
+}
+function newRound() { const r = mkRound(); populate(r); r.shield = upg.shield; return r; }
 let R = mkRound();
 R.tx = 400;
+populate(R);
 
 function jump() { if (R.phase === "plane") { R.phase = "fall"; sfx.jump(); } }
 function chute() {
@@ -460,7 +511,13 @@ function setDir(d) {
 let newHsFlag = false;
 function renderUi() {
   const over = state === "over";
-  document.getElementById("overlay").classList.toggle("hidden", state === "play");
+  document.getElementById("overlay").classList.toggle("hidden", state === "play" || shopOpen);
+  document.getElementById("shop").classList.toggle("hidden", state === "play" || !shopOpen);
+  document.getElementById("shopBtn").textContent = "SHOP · " + bank + " coins";
+  const cl = document.getElementById("coinline");
+  cl.classList.toggle("hidden", !over);
+  cl.innerHTML = "🪙 Coins this run: <b>" + runCoins + "</b> · Bank: <b>" + bank + "</b>";
+  renderShop();
   document.getElementById("blurb").classList.toggle("hidden", over);
   document.getElementById("scoreline").classList.toggle("hidden", !over);
   document.getElementById("jumps").classList.toggle("hidden", !over);
@@ -478,10 +535,39 @@ function renderUi() {
   if (hs > 0) { hsEl.textContent = "🏆 High score: " + hs; hsEl.classList.remove("hidden"); }
   else hsEl.classList.add("hidden");
 }
+function renderShop() {
+  document.getElementById("bankline").innerHTML = "Bank: <b>" + bank + "</b> coins";
+  const box = document.getElementById("upgs");
+  box.innerHTML = "";
+  UPGS.forEach(function (it) {
+    const lv = upg[it.k], maxed = lv >= 3, pr = maxed ? 0 : it.prices[lv], can = !maxed && bank >= pr;
+    const row = document.createElement("div");
+    row.className = "upg";
+    row.innerHTML = '<div class="nm"><div class="t">' + it.name + ' <span class="lv">Lv ' + lv + '/3</span></div><div class="d">' + it.desc + '</div></div>';
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.k = it.k; b.disabled = !can;
+    b.textContent = maxed ? "MAX" : "Buy " + pr;
+    b.addEventListener("click", function () { primeAudio(); buy(it.k); });
+    row.appendChild(b);
+    box.appendChild(row);
+  });
+}
+function buy(k) {
+  const lv = upg[k], it = UPGS.find(function (u) { return u.k === k; });
+  if (!it || lv >= 3) return;
+  const pr = it.prices[lv];
+  if (bank < pr) return;
+  bank -= pr; saveBank(bank);
+  upg = Object.assign({}, upg); upg[k] = lv + 1; saveUpg(upg);
+  sfx.buy();
+  renderUi();
+}
+function setShop(on) { shopOpen = !!on && state !== "play"; renderUi(); }
 function start() {
   AC();
-  round = 0; total = 0; results = []; newHsFlag = false;
-  R = mkRound();
+  round = 0; total = 0; results = []; newHsFlag = false; runCoins = 0; shopOpen = false;
+  bank = loadBank(); upg = loadUpg();
+  R = newRound();
   state = "play";
   renderUi();
 }
@@ -489,6 +575,7 @@ function gameOver() {
   state = "over";
   newHsFlag = total > hs;
   if (newHsFlag) { hs = total; saveHs(hs); }
+  bank += runCoins; saveBank(bank);
   renderUi();
 }
 
@@ -507,7 +594,7 @@ function land() {
   }
   total += pts;
   R.phase = "landed";
-  R.done = { pts: pts, label: label, crash: crash, t: 0 };
+  R.done = { pts: pts, label: label, crash: crash, t: 0, coins: R.got, hits: R.hits };
 }
 
 function update(dt) {
@@ -515,7 +602,8 @@ function update(dt) {
   const p = R.p;
   R.t += dt;
   R.planeX += 140 * dt;
-  if (R.tdir) { R.tx += R.tdir * dt; if (R.tx < 170 || R.tx > 630) R.tdir *= -1; }
+  if (R.tdir) { R.tx += R.tdir * dt; const lo = R.salX < 400 ? 330 : 170, hi = R.salX < 400 ? 630 : 470; if ((R.tx < lo && R.tdir < 0) || (R.tx > hi && R.tdir > 0)) R.tdir *= -1; }
+  R.birds.forEach(function (b) { b.x += b.vx * dt; b.ph += dt * 12; if (b.x > W + 60) b.x = -60; if (b.x < -60) b.x = W + 60; });
   R.gust = Math.sin(R.t * 0.9) * R.wind * 0.25;
   const dir = Math.max(-1, Math.min(1, (keys.ArrowLeft || keys.KeyA ? -1 : 0) + (keys.ArrowRight || keys.KeyD ? 1 : 0) + touchDir));
   if (R.phase === "plane") {
@@ -523,15 +611,33 @@ function update(dt) {
     if (R.t > 3.5 || p.x > W - 60) jump();
   } else if (R.phase === "fall") {
     if (p.chute) p.open = Math.min(1, p.open + dt * 1.1);
-    const term = 260 - 205 * p.open;
-    if (p.vy < term && !p.chute) p.vy = Math.min(term, p.vy + 420 * dt);
-    else if (p.vy > term) p.vy = Math.max(term, p.vy - 380 * p.open * dt);
+    const inDraft = R.drafts.some(function (d) { return Math.abs(p.x - d.x) < d.w / 2 && p.y > d.top && p.y < d.bot; });
+    if (inDraft) R.liftT = 0.8; else R.liftT = Math.max(0, R.liftT - dt);
+    const term = 260 - (205 + 6 * upg.chute) * p.open - (inDraft ? (p.chute ? 110 : 130) : 0);
+    if (p.vy < term && (!p.chute || R.liftT > 0)) p.vy = Math.min(term, p.vy + 420 * dt);
+    else if (p.vy > term) p.vy = Math.max(term, p.vy - Math.max(380 * p.open, inDraft ? 280 : 0) * dt);
     else p.vy = term;
-    const w = (R.wind + R.gust) * (0.35 + 0.65 * p.open), steer = p.chute ? 95 : 60;
-    p.vx += ((dir * steer + w) - p.vx) * Math.min(1, dt * 1.8);
+    R.hitCd = Math.max(0, R.hitCd - dt);
+    const sdir = R.tumble > 0 ? 0 : dir;
+    const w = (R.wind + R.gust) * (0.35 + 0.65 * p.open), steer = (p.chute ? 95 : 60) + upg.steer * (p.chute ? 12 : 8);
+    p.vx += ((sdir * steer + w) - p.vx) * Math.min(1, dt * 1.8);
     p.x += p.vx * dt; p.y += p.vy * dt;
-    p.tilt += ((dir * 0.35) - p.tilt) * dt * 5;
-    p.x = Math.max(10, Math.min(W - 10, p.x));
+    if (R.tumble > 0) { R.tumble -= dt; p.tilt += dt * 14 * (p.vx >= 0 ? 1 : -1); if (R.tumble <= 0) p.tilt = Math.atan2(Math.sin(p.tilt), Math.cos(p.tilt)); }
+    else p.tilt += ((dir * 0.35) - p.tilt) * dt * 5;
+    p.x = Math.max(10, Math.min(W - 10, p.x)); p.y = Math.max(150, p.y);
+    for (let i = 0; i < R.birds.length; i++) {
+      const b = R.birds[i];
+      if (R.hitCd <= 0 && Math.abs(b.x - p.x) < 28 && Math.abs(b.y - (p.y - 10)) < 24) {
+        R.hitCd = 1.2;
+        if (R.shield > 0) { R.shield--; sfx.shield(); continue; }
+        R.tumble = 0.7; R.hits++; total = Math.max(0, total - 10);
+        p.vx += (p.x < b.x ? -1 : 1) * 280; sfx.squawk();
+        for (let j = 0; j < 8; j++) R.parts.push({ x: b.x, y: b.y, vx: (Math.random() - 0.5) * 200, vy: (Math.random() - 0.5) * 200, c: "#eee" });
+      }
+    }
+    const mr = 14 * upg.magnet;
+    R.coins.forEach(function (c) { if (!c.got && Math.abs(c.x - p.x) < 28 + mr && Math.abs(c.y - (p.y - 10)) < 30 + mr) { c.got = true; R.got++; runCoins++; sfx.coin(); } });
+    R.parts.forEach(function (q) { q.x += q.vx * dt; q.y += q.vy * dt; });
     if (p.y >= GROUND - 4) { p.y = GROUND - 4; land(); }
   } else if (R.done) {
     R.done.t += dt;
@@ -540,7 +646,7 @@ function update(dt) {
       results.push(R.done);
       round++;
       if (round >= ROUNDS) gameOver();
-      else R = mkRound();
+      else R = newRound();
     }
   }
   const target = R.p.y - VH * 0.38;
@@ -611,42 +717,10 @@ function drawJumper(p, landed) {
   ctx.stroke();
   ctx.restore();
 }
+function sockX() { return R.salX > 400 ? 585 : 215; }
 function saloonSpot() {
-  const outer = rings()[rings().length - 1].r;
-  const GAP = 28, SOCK = 54, MAXW = 168, MINW = 128;
-  const keepL = R.tx - outer - GAP, keepR = R.tx + outer + GAP;
-  const sock = R.tx < 400 ? 700 : 100;
-  function place(side) {
-    let L = side < 0 ? 16 : keepR;
-    let Rgt = side < 0 ? keepL : W - 16;
-    if (Rgt - L < MINW) return null;
-    if (sock > L && sock < Rgt) {
-      const leftRoom = sock - SOCK - L, rightRoom = Rgt - (sock + SOCK);
-      const takeLeft = leftRoom >= rightRoom ? leftRoom >= MINW : rightRoom < MINW && leftRoom >= MINW;
-      if (takeLeft) Rgt = sock - SOCK;
-      else if (rightRoom >= MINW) L = sock + SOCK;
-      else return null;
-    }
-    if (Rgt - L < MINW) return null;
-    const w = Math.min(MAXW, Rgt - L);
-    const x = side < 0 ? L : Rgt - w;
-    if (x < keepR && x + w > keepL) return null;
-    if (sock > x - 8 && sock < x + w + 8) return null;
-    return { x: x, w: w, side: side, room: Rgt - L };
-  }
-  let spot = R.saloonSide ? place(R.saloonSide) : null;
-  if (!spot) {
-    const a = place(-1), b = place(1);
-    spot = a && b ? (a.room >= b.room ? a : b) : (a || b);
-  }
-  if (!spot) {
-    const side = R.tx >= W / 2 ? -1 : 1;
-    spot = { x: side < 0 ? 12 : W - 12 - MINW, w: MINW, side: side, room: 0 };
-  }
-  R.saloonSide = spot.side;
-  R.saloonX = spot.x;
-  R.saloonW = spot.w;
-  return spot;
+  const w = 156;
+  return { x: R.salX - w / 2, w: w, side: R.salX < 400 ? -1 : 1 };
 }
 function drawSaloon(gy, spot) {
   const x = spot.x, w = spot.w, base = gy;
@@ -727,7 +801,7 @@ function drawSaloon(gy, spot) {
   leaf(mid + dw, -1);
   ctx.fillStyle = "#c4925a";
   ctx.fillRect(x + 6, base - 5, w - 12, 5);
-  const outerLeft = x + w / 2 < R.tx;
+  const outerLeft = R.salX < 400;
   const railX = outerLeft ? x + 10 : x + w - 36;
   const railHitsDoor = railX < mid + dw + 6 && railX + 26 > mid - dw - 6;
   if (!railHitsDoor) {
@@ -738,9 +812,9 @@ function drawSaloon(gy, spot) {
     ctx.moveTo(railX - 2, base - 24); ctx.lineTo(railX + 26, base - 24);
     ctx.stroke();
   }
-  const cactusX = outerLeft ? x - 16 : x + w + 12;
+  const cactusX = outerLeft ? x + w + 22 : x - 22;
   const outerR = rings()[rings().length - 1].r;
-  if (cactusX > 12 && cactusX < W - 12 && Math.abs(cactusX - R.tx) > outerR + 18 && Math.abs(cactusX - (R.tx < 400 ? 700 : 100)) > 28) {
+  if (cactusX > 12 && cactusX < W - 12 && Math.abs(cactusX - R.tx) > outerR + 18 && Math.abs(cactusX - sockX()) > 28) {
     ctx.fillStyle = "#4f9a3c";
     ctx.fillRect(cactusX - 4, base - 36, 8, 36);
     ctx.fillRect(cactusX - 14, base - 26, 4, 12);
@@ -761,7 +835,7 @@ function drawGround() {
   drawSaloon(gy, spot);
   cacti.forEach(function (c) {
     if (Math.abs(c.x - R.tx) < 160) return;
-    if (c.x > spot.x - 14 && c.x < spot.x + spot.w + 14) return;
+    if (Math.abs(c.x - R.salX) < 130 || Math.abs(c.x - sockX()) < 24) return;
     ctx.fillStyle = "#4f9a3c";
     ctx.fillRect(c.x - 4, gy - c.h, 8, c.h);
     ctx.fillRect(c.x - 12, gy - c.h * 0.7, 4, 12);
@@ -774,7 +848,7 @@ function drawGround() {
     ctx.ellipse(R.tx, gy + 8, rs[i].r, rs[i].r * 0.22, 0, 0, 7);
     ctx.fill();
   }
-  const sx = R.tx < 400 ? 700 : 100, w = (R.wind + R.gust) / 90;
+  const sx = sockX(), w = (R.wind + R.gust) / 90;
   ctx.strokeStyle = "#666"; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(sx, gy); ctx.lineTo(sx, gy - 70); ctx.stroke();
   const L = 40 * Math.min(1, 0.3 + Math.abs(w)), dr = Math.sign(R.wind) || 1, droop = (1 - Math.min(1, Math.abs(w))) * 20;
@@ -798,6 +872,9 @@ function hud() {
   ctx.font = "28px system-ui,sans-serif";
   ctx.fillText("Alt " + alt + " m  Speed " + Math.round(p.vy / 2) + " m/s", 22, 90);
   ctx.fillText("Best " + hs, 22, 126);
+  ctx.fillStyle = "#ffcf33"; ctx.beginPath(); ctx.arc(240, 116, 12, 0, 7); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.fillText("x " + runCoins, 260, 126);
+  if (R.hits && R.phase === "fall" && R.hitCd > 0) { ctx.fillStyle = "#ff7755"; ctx.fillText("-10", 340, 126); }
   if (R.phase === "fall") {
     ctx.fillStyle = p.vy <= 90 ? "#3c3" : "#f43";
     ctx.fillRect(22, 138, Math.min(1, p.vy / 260) * 370, 10);
@@ -836,6 +913,35 @@ function hud() {
     ctx.textAlign = "left";
   }
 }
+function drawAir() {
+  const now = performance.now() / 1000;
+  R.drafts.forEach(function (d) {
+    const gr = ctx.createLinearGradient(0, d.top, 0, d.bot);
+    gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(0.2, "rgba(255,255,255,.13)"); gr.addColorStop(0.8, "rgba(255,255,255,.13)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gr; ctx.fillRect(d.x - d.w / 2, d.top, d.w, d.bot - d.top);
+    ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2;
+    for (let k = -1; k <= 1; k++) {
+      ctx.beginPath();
+      for (let yy = d.top + 40; yy < d.bot - 40; yy += 16) { const xx = d.x + k * d.w * 0.28 + Math.sin(yy * 0.03 + now * 4 + k) * 5; if (yy === d.top + 40) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy); }
+      ctx.stroke();
+    }
+    for (let k = 0; k < 4; k++) { const yy = d.bot - ((now * 120 + k * (d.bot - d.top) / 4) % (d.bot - d.top)); ctx.fillStyle = "rgba(255,255,255,.5)"; ctx.beginPath(); ctx.moveTo(d.x, yy - 10); ctx.lineTo(d.x - 8, yy); ctx.lineTo(d.x + 8, yy); ctx.fill(); }
+  });
+  R.coins.forEach(function (c) {
+    if (c.got) return;
+    const s = Math.abs(Math.cos(now * 3 + c.ph));
+    ctx.fillStyle = "#e0a800"; ctx.beginPath(); ctx.ellipse(c.x, c.y, 13 * s + 2, 13, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = "#ffd84a"; ctx.beginPath(); ctx.ellipse(c.x, c.y, 9 * s + 1, 9, 0, 0, 7); ctx.fill();
+  });
+  R.birds.forEach(function (b) {
+    const f = Math.sin(b.ph) * 9, d = b.vx > 0 ? 1 : -1;
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 3.5; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(b.x - 18, b.y - f); ctx.quadraticCurveTo(b.x - 8, b.y - 6 - f * 0.4, b.x, b.y); ctx.quadraticCurveTo(b.x + 8, b.y - 6 - f * 0.4, b.x + 18, b.y - f); ctx.stroke();
+    ctx.fillStyle = "#333"; ctx.beginPath(); ctx.ellipse(b.x, b.y + 2, 7, 4, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = "#f0a020"; ctx.beginPath(); ctx.moveTo(b.x + d * 7, b.y); ctx.lineTo(b.x + d * 13, b.y + 2); ctx.lineTo(b.x + d * 7, b.y + 4); ctx.fill();
+  });
+  if (R.phase === "fall") R.parts.forEach(function (q) { ctx.fillStyle = q.c; ctx.fillRect(q.x, q.y, 4, 4); });
+}
 function draw() {
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   const k = state === "play" ? R.cam / GROUND : 0;
@@ -853,10 +959,12 @@ function draw() {
     if (c.x < -180) c.x = W + 80;
     drawCloud(c.x, c.y, c.s);
   });
+  if (state === "play") drawAir();
   drawGround();
   if (state === "play") {
     if (R.planeX < W + 150) drawPlane(R.planeX, 110);
     if (R.phase !== "plane") drawJumper(R.p, R.phase === "landed");
+    if (R.phase === "fall" && R.shield > 0) { ctx.strokeStyle = "rgba(120,220,255,.7)"; ctx.lineWidth = 2 + R.shield; ctx.beginPath(); ctx.arc(R.p.x, R.p.y - 12, 34, 0, 7); ctx.stroke(); }
   }
   ctx.restore();
   if (state === "play") hud();
@@ -867,12 +975,12 @@ function onKeyDown(e) {
   primeAudio();
   if (e.code === "Space" || e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ArrowLeft" || e.code === "ArrowRight") e.preventDefault();
   if (e.code === "Space" || e.code === "ArrowUp") chute();
-  if (e.code === "Enter" && state !== "play") start();
+  if (e.code === "Enter" && state !== "play" && !shopOpen) start();
 }
 function onKeyUp(e) { keys[e.code] = false; }
 window.addEventListener("keydown", onKeyDown);
 window.addEventListener("keyup", onKeyUp);
-document.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
+document.addEventListener("touchmove", function (e) { if (!(shopOpen && e.target.closest && e.target.closest("#shop"))) e.preventDefault(); }, { passive: false });
 document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 document.getElementById("wrap").addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
@@ -888,8 +996,10 @@ function hold(id, d) {
 hold("bL", -1);
 hold("bR", 1);
 document.getElementById("bChute").addEventListener("pointerdown", function (e) { e.preventDefault(); primeAudio(); chute(); });
+document.getElementById("shopBtn").addEventListener("click", function (e) { e.preventDefault(); primeAudio(); setShop(true); });
+document.getElementById("shopBack").addEventListener("click", function (e) { e.preventDefault(); primeAudio(); setShop(false); });
 document.getElementById("play").addEventListener("pointerdown", function (e) { e.preventDefault(); primeAudio(); start(); });
-["play", "bL", "bR", "bChute"].forEach(function (id) {
+["play", "bL", "bR", "bChute", "shopBtn", "shopBack"].forEach(function (id) {
   const el = document.getElementById(id);
   ["pointerup", "touchend", "click"].forEach(function (type) {
     el.addEventListener(type, function () { primeAudio(); }, type === "touchend" ? { passive: true } : false);
@@ -941,6 +1051,8 @@ window.__game = {
   get total() { return total; },
   get R() { return R; },
   get scale() { return scale; },
+  get bank() { return bank; }, get upg() { return upg; }, get runCoins() { return runCoins; },
+  buy: buy, setShop: setShop,
   start: start, chute: chute, setDir: setDir, layout: layout,
   get muted() { return muted; },
   get audioPrimed() { return audioPrimed; },
