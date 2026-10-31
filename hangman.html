@@ -99,7 +99,7 @@ function guess(c,silent){if(over||guessed.has(c)||!/^[a-z]$/.test(c))return;gues
 function solved(){return word.split('').every(c=>c===' '||guessed.has(c))}
 function check(){if(solved())end(true);else if(wrong>=MAXW)end(false)}
 function end(win){over=true;st.played++;let pts=0;
- if(win){st.won++;st.streak++;pts=10*new Set(word.replace(/ /g,'')).size+(MAXW-wrong)*5+st.streak*2-(st.cur.h||0)*5;pts=Math.max(5,pts);st.score+=pts;st.best=Math.max(st.best,st.streak);document.body.classList.add('won');confetti()}
+ if(win){st.won++;st.streak++;pts=10*new Set(word.replace(/ /g,'')).size+(MAXW-wrong)*5+st.streak*2;pts=Math.max(5,pts);st.score+=pts;st.best=Math.max(st.best,st.streak);document.body.classList.add('won');confetti()}
  else{st.streak=0;document.body.classList.add('lost');document.querySelectorAll('.ch').forEach(x=>{if(!x.textContent){x.textContent=x.dataset.c;x.classList.add('miss')}})}
  st.cur=null;save();upd();
  setTimeout(()=>{$('ovT').textContent=win?'🎉 YOU WIN!':'💀 GAME OVER';$('ovM').textContent=win?'Nice one! The word was':'So close! The word was';$('ovA').textContent=word;
@@ -107,7 +107,7 @@ function end(win){over=true;st.played++;let pts=0;
  win?[523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.15),i*120)):[300,220,150].forEach((f,i)=>setTimeout(()=>beep(f,.2),i*180));}
 $('next').onclick=()=>newGame();
 $('skipBtn').onclick=()=>{if(!over&&st.cur&&st.cur.g.length){st.streak=0;st.played++;}st.cur=null;save();newGame()};
-$('hintBtn').onclick=()=>{if(over)return;const left=[...new Set(word.replace(/ /g,''))].filter(c=>!guessed.has(c));if(left.length<2)return;st.cur.h=(st.cur.h||0)+1;guess(left[Math.floor(Math.random()*left.length)])};
+$('hintBtn').onclick=()=>{if(over)return;const left=[...new Set(word.replace(/ /g,''))].filter(c=>!guessed.has(c));if(left.length<2)return;st.cur.h=(st.cur.h||0)+1;st.score=Math.max(0,st.score-5);upd();guess(left[Math.floor(Math.random()*left.length)])};
 document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;if($('ov').classList.contains('show')){if(e.key==='Enter'||e.key===' '){e.preventDefault();newGame()}return}const k=e.key.toLowerCase();if(/^[a-z]$/.test(k))guess(k)});
 let ac;function beep(f,d){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.type='triangle';g.gain.setValueAtTime(.12,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
 let confId=0;function confetti(){const my=++confId;const cv=$('conf'),x=cv.getContext&&cv.getContext('2d');if(!x)return;cv.width=innerWidth;cv.height=innerHeight;const P=[...Array(120)].map(()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.5,v:2+Math.random()*4,r:Math.random()*6.3,c:['#ffb800','#ff3d7f','#2ee59d','#5ab8ff','#fff'][Math.floor(Math.random()*5)]}));let t=0;
