@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Read-Along: The Three Little Pigs</title>
+<style>
+:root{--paper:#fff6e3;--ink:#4a2e1a;--lit:#ff9a1f;--glow:#ffd36b}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:radial-gradient(circle at 30% 20%,#fbe3b8,#e8b97a);font-family:Georgia,"Palatino Linotype",serif;color:var(--ink);display:flex;flex-direction:column;min-height:100vh}
+header{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.6rem 1rem}
+h1{font-size:clamp(1.1rem,2.6vw,1.8rem);margin:0}
+.book{flex:1;display:grid;grid-template-columns:1.1fr 1fr;gap:1rem;padding:0 1rem 1rem;min-height:0}
+@media (orientation:portrait),(max-width:760px){.book{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.panel{background:var(--paper);border-radius:22px;box-shadow:0 8px 24px #0003,inset 0 0 0 6px #f3dcae;padding:1rem;position:relative;overflow:hidden}
+#scene svg{width:100%;height:100%;max-height:60vh;display:block}
+#text{font-size:clamp(1.5rem,3.6vw,2.6rem);line-height:1.6;display:flex;flex-direction:column}
+#words{flex:1}
+.w{display:inline-block;padding:0 .12em;margin:0 .05em;border-radius:.3em;cursor:pointer;transition:all .25s}
+.w.lit{color:#b34d00;background:var(--glow);box-shadow:0 0 14px var(--glow);transform:scale(1.04)}
+.w.next{border-bottom:3px dashed var(--lit)}
+.ctrl{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.6rem}
+button{font:inherit;font-size:1.05rem;border:0;border-radius:999px;padding:.6rem 1.1rem;background:#8a5a2b;color:#fff;cursor:pointer;box-shadow:0 3px 0 #5b3a1a}
+button:active{transform:translateY(2px);box-shadow:none}
+#start{font-size:1.3rem;padding:.8rem 1.6rem;background:#2e8b57;box-shadow:0 3px 0 #1d5c39}
+#start.on{background:#c0392b;box-shadow:0 3px 0 #7b2318}
+#mic{display:inline-flex;align-items:center;gap:.4rem;font-size:1rem}
+#dot{width:14px;height:14px;border-radius:50%;background:#999}
+#dot.on{background:#e74c3c;animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px #e74c3c33}}
+#msg{font-size:1rem;background:#fff1c9;border-radius:12px;padding:.5rem .8rem;margin:.4rem 1rem 0;display:none}
+#pg{font-size:1rem;opacity:.7}
+#heard{font-size:.9rem;opacity:.6;font-style:italic;min-height:1.2em}
+/* animations */
+#scene svg [class]{transform-box:fill-box}
+.bob{transform-origin:center bottom;animation:bob .9s ease-in-out infinite}@keyframes bob{0%,100%{transform:scale(1.04,.96)}50%{transform:translateY(-6px) scale(.97,1.04)}}
+.walk{animation:walk 3s ease-out}@keyframes walk{from{transform:translateX(-80px)}}
+.blink{transform-origin:center;animation:blink 4s infinite}@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.drift{animation:drift 40s linear infinite alternate}@keyframes drift{to{transform:translateX(60px)}}
+.spin{transform-origin:center;animation:spin 12s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.sway{transform-origin:center bottom;animation:sway 3s ease-in-out infinite alternate}@keyframes sway{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+.hammer{transform-origin:left center;animation:ham .35s ease-in-out infinite alternate}@keyframes ham{to{transform:rotate(-50deg)}}
+.build{transform-origin:center bottom;animation:grow 1.2s cubic-bezier(.3,1.6,.6,1) both}@keyframes grow{from{transform:scale(1,0)}}
+.sneak{transform-origin:center bottom;animation:sneak 1.4s ease-in-out infinite}@keyframes sneak{50%{transform:translate(8px,-3px) scale(1.02,.98)}}
+.armwave{transform-origin:right top;animation:knockA .5s ease-in-out infinite alternate}@keyframes knockA{to{transform:rotate(14deg)}}
+.knock{animation:pop .5s ease-in-out infinite alternate}
+.wag{transform-origin:left bottom;animation:wag .6s ease-in-out infinite alternate}@keyframes wag{to{transform:rotate(-12deg)}}
+.huff{transform-origin:center bottom;animation:huff 1.6s ease-in-out infinite}@keyframes huff{0%,100%{transform:scale(1)}40%{transform:scale(.94,1.08) translateX(6px)}60%{transform:scale(1.08,.94) translateX(-4px)}}
+.strain{transform-origin:center bottom;animation:huff .7s ease-in-out infinite}
+.cheeks{transform-origin:center;animation:cheek 1.6s ease-in-out infinite}@keyframes cheek{0%,100%{transform:scale(.6)}40%{transform:scale(1.4)}}
+.wind{stroke-dasharray:40 26;animation:wind .5s linear infinite}.wind2{stroke-dasharray:20 30;animation:wind .35s linear infinite}@keyframes wind{to{stroke-dashoffset:-66}}
+.mpuff{transform-origin:center;animation:mpuff .8s ease-out infinite}@keyframes mpuff{from{transform:scale(.4);opacity:1}to{transform:translateX(60px) scale(1.6);opacity:0}}
+.fly{animation:fly 1.6s linear infinite}@keyframes fly{from{transform:translate(-60px,0) rotate(0);opacity:0}20%{opacity:1}to{transform:translate(220px,-60px) rotate(720deg);opacity:0}}
+.blow{transform-origin:center bottom;animation:blow 2.2s cubic-bezier(.6,-.3,.9,.6) .2s forwards}@keyframes blow{20%{transform:skewX(-12deg)}to{transform:translate(320px,-160px) rotate(80deg) scale(.4);opacity:0}}
+.runoff{animation:runoff 3s ease-in .4s forwards}@keyframes runoff{to{transform:translateX(160px)}}
+.run{transform-origin:center bottom;animation:run .3s ease-in-out infinite alternate}@keyframes run{to{transform:translateY(-6px) rotate(8deg)}}
+.legs{animation:legs .15s linear infinite alternate}@keyframes legs{to{transform:skewX(25deg)}}
+.dust{transform-origin:center;animation:dust .8s ease-out infinite}@keyframes dust{from{transform:scale(.3);opacity:1}to{transform:translateX(18px) scale(1.4);opacity:0}}
+.pop{transform-origin:center;animation:pop 1s ease-in-out infinite alternate}@keyframes pop{from{transform:scale(.94)}to{transform:scale(1.06)}}
+.sweat{animation:sweat 1s ease-in infinite}@keyframes sweat{to{transform:translate(-6px,20px);opacity:0}}
+.drop{animation:drop 2.2s cubic-bezier(.5,0,1,.6) infinite}@keyframes drop{0%{transform:translateY(-80px)}70%{transform:translateY(150px) scale(1,1)}80%{transform:translateY(160px) scale(1.2,.7)}100%{transform:translateY(160px) scale(1.2,.7);opacity:0}}
+.splash{transform-origin:center bottom;animation:splash 2.2s ease-out infinite}@keyframes splash{0%,68%{transform:scale(0)}78%{transform:scale(1.3)}100%{transform:scale(1);opacity:0}}
+.steam{animation:steam 2s ease-out infinite}@keyframes steam{from{opacity:.9;transform:translateY(0) scale(.6)}to{opacity:0;transform:translateY(-50px) scale(1.5)}}
+.flame{transform-origin:center bottom;animation:flame .25s ease-in-out infinite alternate}@keyframes flame{to{transform:scaleY(1.2)}}
+.dance{transform-origin:center bottom;animation:dance .5s ease-in-out infinite alternate}@keyframes dance{from{transform:rotate(-10deg) scale(1.05,.95)}to{transform:rotate(10deg) translateY(-12px) scale(.95,1.06)}}
+.dance2{transform-origin:center bottom;animation:dance .5s ease-in-out .25s infinite alternate-reverse}
+.confetti{animation:conf 2.5s linear infinite}@keyframes conf{to{transform:translateY(320px) rotate(540deg)}}
+.flee{animation:flee 3.5s ease-in forwards}@keyframes flee{to{transform:translateX(-300px)}}
+.fade{animation:fadein .6s}@keyframes fadein{from{opacity:0}}
+</style></head><body>
+<header><h1>📖 The Three Little Pigs</h1>
+<div class="ctrl" style="margin:0"><button id="start">🎤 Start Listening</button><span id="mic"><span id="dot"></span><span id="micTxt">Mic off</span></span></div></header>
+<div id="msg"></div>
+<main class="book">
+ <section class="panel" id="scene"></section>
+ <section class="panel" id="text"><div id="words"></div><div id="heard"></div>
+  <div class="ctrl"><button id="back">◀ Back</button><button id="next">Next ▶</button><button id="restart">↺ Restart</button><span id="pg"></span></div>
+ </section>
+</main>
+<script>
+"use strict";
+const PAGES=[
+"Once upon a time, three little pigs left home to build their own houses.",
+"The first pig built a house of straw. The second pig built a house of sticks. The third pig built a house of bricks.",
+"Along came a big bad wolf. He knocked on the straw house and said, little pig, let me come in!",
+"Then I'll huff and I'll puff and I'll blow your house in! And the straw house blew away.",
+"The wolf went to the stick house. He huffed and he puffed and the sticks flew away. The pigs ran to their brother.",
+"At the brick house, the wolf huffed and puffed with all his might. But the brick house did not fall down.",
+"So the wolf climbed onto the roof and slid down the chimney. Splash! He fell right into a pot of hot soup.",
+"The wolf ran away and never came back. The three little pigs lived happily ever after. The end."
+];
+// ---------- SVG scenes (cartoon) ----------
+const O='stroke="#2b1a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
+const DEFS=`<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ec8ff"/><stop offset=".7" stop-color="#bfeaff"/><stop offset="1" stop-color="#fff6d6"/></linearGradient>
+<linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a5a"/><stop offset="1" stop-color="#ffe3a3"/></linearGradient>
+<linearGradient id="hill1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9be36b"/><stop offset="1" stop-color="#5cb33c"/></linearGradient>
+<linearGradient id="hill2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd05a"/><stop offset="1" stop-color="#3f9a2c"/></linearGradient>
+<radialGradient id="sunG"><stop offset="0" stop-color="#fff7a8"/><stop offset="1" stop-color="#ffc21a"/></radialGradient>
+<linearGradient id="kitchen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2a8"/><stop offset="1" stop-color="#f3b871"/></linearGradient>
+</defs>`;
+const cloud=(x,y,s,d)=>`<g class="drift" style="animation-duration:${d}s"><g transform="translate(${x} ${y}) scale(${s})"><path d="M0 20 q-2 -18 18 -16 q8 -16 28 -6 q18 -8 24 10 q14 2 10 14 z" fill="#fff" ${O}/><path d="M6 22 q30 6 72 -2" fill="none" stroke="#d6ecff" stroke-width="4"/></g></g>`;
+const tree=(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s})"><rect x="-6" y="-10" width="12" height="34" fill="#8b5a2b" ${O}/><g class="sway"><circle cx="0" cy="-30" r="24" fill="#3fa34d" ${O}/><circle cx="-16" cy="-16" r="16" fill="#3fa34d" ${O}/><circle cx="16" cy="-16" r="16" fill="#3fa34d" ${O}/><circle cx="-6" cy="-38" r="8" fill="#6fd17a"/><circle cx="10" cy="-30" r="5" fill="#e74c3c" stroke="#2b1a10" stroke-width="2"/><circle cx="-12" cy="-20" r="5" fill="#e74c3c" stroke="#2b1a10" stroke-width="2"/></g></g>`;
+const flower=(x,y,c)=>`<g transform="translate(${x} ${y})"><path d="M0 0v-12" stroke="#2f7d1f" stroke-width="2"/><circle cy="-14" r="4" fill="${c}" stroke="#2b1a10" stroke-width="1.5"/><circle cy="-14" r="1.5" fill="#ffd84d"/></g>`;
+function bg(o={}){const sky=o.sky||"sky";return DEFS+`<rect width="400" height="300" fill="url(#${sky})"/>
+<g transform="translate(345 52)"><g class="spin">${[0,45,90,135,180,225,270,315].map(a=>`<path transform="rotate(${a})" d="M0 -36 l5 -10 -10 0z" fill="#ffd23a"/>`).join("")}</g><circle r="26" fill="url(#sunG)" ${O}/><circle cx="-8" cy="-4" r="2.5" fill="#2b1a10"/><circle cx="8" cy="-4" r="2.5" fill="#2b1a10"/><path d="M-9 7 q9 8 18 0" fill="none" stroke="#2b1a10" stroke-width="2.5"/></g>
+${cloud(30,30,.9,40)}${cloud(170,55,.7,55)}${cloud(260,20,.6,48)}
+<path d="M-10 215 q90 -60 190 -10 t230 -20 v120 h-420z" fill="url(#hill1)" ${O}/>
+${o.trees!==false?tree(40,200,.8)+tree(380,195,.7):""}
+<path d="M-10 240 q120 -30 220 0 t200 -10 v80 h-420z" fill="url(#hill2)" ${O}/>
+<path d="M150 300 q40 -40 30 -62 q20 0 40 0 q-10 22 30 62z" fill="#e9c88a" stroke="#2b1a10" stroke-width="2"/>
+${flower(30,262,"#ff6b9d")}${flower(60,272,"#fff")}${flower(330,268,"#ff6b9d")}${flower(370,258,"#b48cff")}`}
+const eye=(x,y,look=0,brow=0)=>`<g transform="translate(${x} ${y})"><ellipse rx="6.5" ry="8" fill="#fff" stroke="#2b1a10" stroke-width="2.2"/><g class="blink"><circle cx="${1.5+look}" cy="1" r="3.8" fill="#2b1a10"/><circle cx="${3+look}" cy="-1" r="1.4" fill="#fff"/></g><path d="M-7 ${-12-brow} q7 ${-4+brow*2} 14 ${brow*1.5}" fill="none" stroke="#2b1a10" stroke-width="2.5"/></g>`;
+const MOUTH={happy:'<path d="M-6 0 q6 8 13 0 q-6 4 -13 0z" fill="#c0392b" stroke="#2b1a10" stroke-width="2"/>',
+ scared:'<ellipse cx="0" cy="3" rx="4.5" ry="6" fill="#7a1f1f" stroke="#2b1a10" stroke-width="2"/>',
+ smile:'<path d="M-6 0 q6 6 12 0" fill="none" stroke="#2b1a10" stroke-width="2.5"/>',
+ grin:'<path d="M-8 -1 q8 12 16 0z" fill="#c0392b" stroke="#2b1a10" stroke-width="2"/><path d="M-6 0 h12" stroke="#fff" stroke-width="2"/>'};
+const PIGC={hat:{body:"#ffb6c9",shade:"#f08aa6"},overalls:{body:"#ffc2a8",shade:"#ef9a7a"},builder:{body:"#ffadc0",shade:"#e57e9b"}};
+function pig(x,y,s=1,v="hat",expr="happy",anim="bob",flip=false){const c=PIGC[v];
+ const legs=`<g class="${anim.startsWith('run')?'legs':''}"><rect x="-16" y="14" width="10" height="16" rx="4" fill="${c.body}" ${O}/><rect x="6" y="14" width="10" height="16" rx="4" fill="${c.body}" ${O}/><path d="M-17 28h12M5 28h12" stroke="#5a2b2b" stroke-width="4"/></g>`;
+ let outfit="",hat="";
+ if(v==="hat"){outfit=`<path d="M-24 4 q24 14 48 0 v8 q-24 12 -48 0z" fill="#ffd84d" ${O}/><circle cx="0" cy="10" r="2" fill="#2b1a10"/>`;hat=`<g transform="translate(0 -24)"><ellipse rx="26" ry="7" fill="#f2c94c" ${O}/><path d="M-13 -1 q2 -16 13 -16 q11 0 13 16z" fill="#f2c94c" ${O}/><path d="M-13 -3 h26" stroke="#e74c3c" stroke-width="4"/><path d="M-20 2l-4 6M18 3l5 6M-8 5l-1 6" stroke="#c9a531" stroke-width="2"/></g>`}
+ if(v==="overalls"){outfit=`<path d="M-18 -4 h36 v18 q-18 10 -36 0z" fill="#3b7dd8" ${O}/><path d="M-14 -4 l-6 -14M14 -4 l6 -14" stroke="#3b7dd8" stroke-width="5"/><circle cx="-12" cy="0" r="2.5" fill="#ffd84d" stroke="#2b1a10"/><circle cx="12" cy="0" r="2.5" fill="#ffd84d" stroke="#2b1a10"/><rect x="-6" y="2" width="12" height="7" fill="#2d63b0" stroke="#2b1a10" stroke-width="1.5"/>`;hat=`<path d="M-8 -24 q10 -6 20 2" fill="none" stroke="#2b1a10" stroke-width="2.5"/>`}
+ if(v==="builder"){outfit=`<path d="M-24 -6 q24 -6 48 0 v18 q-24 12 -48 0z" fill="#ff8c1a" ${O}/><path d="M-22 4 h44" stroke="#fff35c" stroke-width="4"/><path d="M-24 14 h48" stroke="#8b5a2b" stroke-width="4"/>`;hat=`<g transform="translate(0 -18)"><path d="M-20 4 q0 -22 20 -22 q20 0 20 22z" fill="#ffd21a" ${O}/><rect x="-24" y="2" width="48" height="6" rx="3" fill="#ffd21a" ${O}/><path d="M0 -18 v20" stroke="#e0a800" stroke-width="4"/></g>`}
+ return `<g transform="translate(${x} ${y}) scale(${flip?-s:s} ${s})"><g class="${anim}">
+ ${legs}<path d="M-26 0 q-12 -6 -8 4" fill="none" stroke="${c.shade}" stroke-width="3"/><path d="M-30 0 q-10 -2 -6 -10 q6 2 2 6" fill="none" stroke="#2b1a10" stroke-width="2.5"/>
+ <ellipse cx="0" cy="0" rx="26" ry="22" fill="${c.body}" ${O}/><path d="M-22 8 q22 16 44 0 q-4 12 -22 14 q-18 -2 -22 -14z" fill="${c.shade}"/>${outfit}
+ <g transform="translate(2 -30)"><path d="M-16 -16 l-4 -14 14 8z M10 -22 l12 -10 -2 16z" fill="${c.shade}" ${O}/><circle r="22" fill="${c.body}" ${O}/><path d="M-20 6 q10 16 34 10 q-14 12 -30 0z" fill="${c.shade}"/>
+ ${eye(-8,-6,1,expr==="scared"?3:0)}${eye(9,-6,1,expr==="scared"?3:0)}
+ <ellipse cx="2" cy="7" rx="10" ry="7" fill="#ff8fab" ${O}/><ellipse cx="-1" cy="7" rx="1.8" ry="3" fill="#7a2f45"/><ellipse cx="5" cy="7" rx="1.8" ry="3" fill="#7a2f45"/>
+ <circle cx="-15" cy="6" r="4" fill="#ff7b9c" opacity=".6"/><circle cx="19" cy="6" r="4" fill="#ff7b9c" opacity=".6"/><g transform="translate(2 17)">${MOUTH[expr]}</g>${hat}</g>
+ </g></g>`}
+function wolf(x,y,s=1,expr="sly",anim="bob",puff=false,flip=false){
+ const brow=expr==="ouch"?'M-14 -14 l10 4 M6 -10 l10 -4':'M-15 -8 l11 6 M4 -2 l12 -8';
+ const mouth=puff?'<ellipse cx="-58" cy="4" rx="5" ry="4" fill="#7a1f1f" stroke="#2b1a10" stroke-width="2"/>':expr==="ouch"?'<path d="M-62 2 q14 14 26 0z" fill="#7a1f1f" stroke="#2b1a10" stroke-width="2.5"/><path d="M-58 2 l2 5 2 -5M-46 2l2 5 2 -5" fill="#fff"/>':'<path d="M-64 2 q14 8 30 -2" fill="#7a1f1f" stroke="#2b1a10" stroke-width="2.5"/><path d="M-60 2 l3 7 3 -6 M-50 3 l3 7 3 -7 M-42 1 l2 6 2 -6" fill="#fff" stroke="#2b1a10" stroke-width="1.2"/>';
+ return `<g transform="translate(${x} ${y}) scale(${flip?-s:s} ${s})"><g class="${anim}">
+ <g class="wag"><path d="M26 6 q40 -6 46 -40 q-16 10 -18 2 q-6 26 -30 26z" fill="#8a8f9c" ${O}/><path d="M60 -30 q6 -4 12 -4 q-2 8 -8 10z" fill="#e8e8ee"/></g>
+ <rect x="-18" y="22" width="12" height="26" rx="5" fill="#6b4ea3" ${O}/><rect x="8" y="22" width="12" height="26" rx="5" fill="#6b4ea3" ${O}/><ellipse cx="-14" cy="50" rx="11" ry="6" fill="#8a8f9c" ${O}/><ellipse cx="14" cy="50" rx="11" ry="6" fill="#8a8f9c" ${O}/>
+ <path d="M-30 -10 q30 -20 60 0 l-4 38 h-52z" fill="#8a8f9c" ${O}/><path d="M-14 -6 q14 -4 28 0 l-2 32 h-24z" fill="#e8e8ee"/><path d="M-30 -10 q8 -6 16 -6 l2 42 h-20z M30 -10 q-8 -6 -16 -6 l-2 42 h20z" fill="#c0392b" ${O}/><circle cx="-20" cy="6" r="2" fill="#ffd84d"/><circle cx="-20" cy="16" r="2" fill="#ffd84d"/>
+ <path d="M-30 18 h60 v10 h-60z" fill="#6b4ea3" ${O}/><path d="M-6 22 l4 6 4 -6" fill="#2b1a10"/>
+ <g class="${anim==='bob'?'armwave':''}"><path d="M-28 -4 q-22 10 -24 26" fill="none" stroke="#2b1a10" stroke-width="13"/><path d="M-28 -4 q-22 10 -24 26" fill="none" stroke="#8a8f9c" stroke-width="8"/><circle cx="-52" cy="24" r="6" fill="#8a8f9c" ${O}/></g>
+ <g transform="translate(-6 -34)"><path d="M-2 -18 l-4 -24 16 16z M16 -18 l10 -22 6 22z" fill="#8a8f9c" ${O}/><path d="M2 -22 l-2 -12 6 6z" fill="#f4a7b9"/>
+ <path d="M18 -16 q8 18 -4 28 q-30 8 -52 2 q-10 -2 -10 -10 q0 -8 10 -8 l22 -2 q4 -14 34 -10z" fill="#8a8f9c" ${O}/>
+ <path d="M-40 6 q20 8 48 4 q-6 8 -24 10 q-20 0 -24 -14z" fill="#6d7280"/>
+ ${puff?'<g class="cheeks ga-wind"><circle cx="-20" cy="4" r="12" fill="#a9aebb" stroke="#2b1a10" stroke-width="2.5"/><circle cx="-24" cy="2" r="3" fill="#fff" opacity=".7"/></g>':""}
+ <g transform="translate(-48 -6)"><ellipse rx="6" ry="5" fill="#2b1a10"/><circle cx="-2" cy="-2" r="1.6" fill="#fff"/></g>
+ ${eye(-12,-14,-2,0)}${eye(4,-14,-2,0)}<path d="${brow}" transform="translate(-4 -24)" stroke="#2b1a10" stroke-width="4" stroke-linecap="round"/>
+ <g transform="translate(14 0)">${mouth}</g></g>
+ </g></g>`}
+const strawHouse=(x,y,c="")=>`<g transform="translate(${x} ${y})"><g class="${c}"><rect x="-38" y="-50" width="76" height="50" fill="#f6d36b" ${O}/>${[-30,-18,-6,6,18,30].map(i=>`<path d="M${i} -48 l-2 46" stroke="#c99a2e" stroke-width="2"/>`).join("")}<path d="M-48 -46 l48 -40 48 40z" fill="#eec04a" ${O}/>${[-30,-15,0,15,30].map(i=>`<path d="M${i*.7} -78 l${i*.5} 30" stroke="#c99a2e" stroke-width="2"/>`).join("")}<path d="M-48 -46 l-4 6 M-40 -46 l-2 8 M40 -46 l3 8 M48 -46 l5 6" stroke="#c99a2e" stroke-width="2"/><path d="M-10 0 v-26 q10 -10 20 0 v26z" fill="#a0702a" ${O}/><circle cx="6" cy="-12" r="2" fill="#2b1a10"/><rect x="18" y="-38" width="14" height="12" fill="#bfeaff" ${O}/></g></g>`;
+const stickHouse=(x,y,c="")=>`<g transform="translate(${x} ${y})"><g class="${c}"><rect x="-38" y="-52" width="76" height="52" fill="#b9814a" ${O}/>${[-40,-26,-12].map(i=>`<path d="M-40 ${i} h80" stroke="#6b4421" stroke-width="5"/><path d="M-40 ${i} h80" stroke="#a06a38" stroke-width="2"/>`).join("")}<path d="M-48 -48 l48 -40 48 40z" fill="#8b5a2b" ${O}/><path d="M-30 -56 l60 0 M-18 -70 l36 0" stroke="#5a3818" stroke-width="3"/><path d="M-10 0 v-28 h20 v28z" fill="#5a3818" ${O}/><rect x="-32" y="-40" width="14" height="12" fill="#bfeaff" ${O}/></g></g>`;
+function brickHouse(x,y,c=""){let b="";for(let r=0;r<6;r++)for(let i=0;i<6;i++)b+=`<rect x="${-46+i*16+(r%2?-8:0)}" y="${-62+r*10}" width="15" height="9" rx="1.5" fill="${(r+i)%3?"#d0573e":"#b8432d"}" stroke="#7a2b1c" stroke-width="1.2"/>`;
+ return `<g transform="translate(${x} ${y})"><g class="${c}"><rect x="22" y="-104" width="16" height="36" fill="#b8432d" ${O}/><rect x="19" y="-108" width="22" height="7" fill="#7a2b1c" ${O}/><svg x="-46" y="-62" width="92" height="62" viewBox="-46 -62 92 62" overflow="hidden"><rect x="-46" y="-62" width="92" height="62" fill="#e8dccb"/>${b}</svg><rect x="-46" y="-62" width="92" height="62" fill="none" ${O}/><path d="M-56 -58 l56 -42 56 42z" fill="#7a3b2e" ${O}/><path d="M-40 -70 h80 M-26 -82 h52" stroke="#5a271d" stroke-width="2"/><path d="M-11 0 v-30 q11 -12 22 0 v30z" fill="#3fa34d" ${O}/><circle cx="6" cy="-14" r="2" fill="#ffd84d"/><rect x="-38" y="-44" width="18" height="16" fill="#bfeaff" ${O}/><path d="M-29 -44 v16 M-38 -36 h18" stroke="#2b1a10" stroke-width="2"/><rect x="20" y="-44" width="18" height="16" fill="#ffe7a0" ${O}/><path d="M29 -44 v16 M20 -36 h18" stroke="#2b1a10" stroke-width="2"/></g></g>`}
+const windFx=(x,y)=>`<g transform="translate(${x} ${y})"><g fill="#fff" stroke="#2b1a10" stroke-width="2"><circle class="mpuff" cx="4" cy="24" r="7"/><circle class="mpuff" cx="4" cy="24" r="7" style="animation-delay:.4s"/></g></g><g transform="translate(${x} ${y})" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><g class="wind"><path d="M0 0 h110 q20 0 14 -14"/><path d="M10 24 h140"/><path d="M-6 48 h120 q18 0 12 14"/></g><g class="wind2" stroke="#d5f1ff" stroke-width="3"><path d="M30 12 h90"/><path d="M20 36 h100"/></g></g>`;
+const debris=(kind,n=10)=>{let s="";for(let i=0;i<n;i++){const y=130+((i*37)%90),d=(1.2+(i%4)*.35).toFixed(2),dl=(i*.17).toFixed(2);
+ s+=`<g class="fly" style="animation-duration:${d}s;animation-delay:${dl}s"><path transform="translate(230 ${y}) rotate(${i*40})" d="${kind==="straw"?"M0 0 l18 3":"M0 0 l22 2"}" stroke="${kind==="straw"?"#e8b93a":"#7a4a22"}" stroke-width="${kind==="straw"?3:5}" stroke-linecap="round"/></g>`}return s};
+const dust=(x,y)=>`<g transform="translate(${x} ${y})" fill="#f1e2c4" stroke="#2b1a10" stroke-width="2"><circle class="dust" r="8"/><circle class="dust" cx="12" cy="-4" r="6" style="animation-delay:.2s"/><circle class="dust" cx="22" cy="2" r="5" style="animation-delay:.4s"/></g>`;
+const bubble=(x,y,t,w=110)=>`<g transform="translate(${x} ${y})"><g class="pop"><rect x="${-w/2}" y="-20" width="${w}" height="34" rx="16" fill="#fff" ${O}/><path d="M-8 14 l-6 14 16 -14" fill="#fff" ${O}/><path d="M-7 13 h14" stroke="#fff" stroke-width="4"/><text y="3" font-size="15" font-weight="bold" text-anchor="middle" fill="#2b1a10" font-family="Comic Sans MS,Chalkboard SE,cursive">${t}</text></g></g>`;
+const confetti=()=>{const C=["#ff4d6d","#ffd23a","#3b7dd8","#3fa34d","#b48cff","#ff8c1a"];let s="";for(let i=0;i<34;i++){const x=(i*53)%400,d=(2+(i%5)*.5).toFixed(1),dl=((i*.23)%2.5).toFixed(2);s+=`<rect class="confetti" x="${x}" y="-10" width="7" height="11" rx="1.5" fill="${C[i%6]}" style="animation-duration:${d}s;animation-delay:${dl}s"/>`}return s};
+const SCENES=[
+()=>bg()+`<g transform="translate(60 0)"><rect x="-30" y="150" width="60" height="50" fill="#f5e1c0" ${O}/><path d="M-38 152 l38 -30 38 30z" fill="#d35400" ${O}/><path d="M-8 200 v-22 h16 v22z" fill="#8b5a2b" ${O}/></g>`+pig(108,222,.6,"overalls","smile","bob",true)+`<g class="walk">${pig(160,248,.9,"hat","happy","bob")}${pig(235,250,.9,"overalls","happy","bob")}${pig(310,246,.95,"builder","grin","bob")}</g>`+bubble(205,140,"Bye, Mama!",120),
+()=>bg({trees:false})+`<g class="build gh-b1">${strawHouse(70,240)}</g><g class="build gh-b2">${stickHouse(200,236)}</g><g class="build gh-b3">${brickHouse(330,242)}</g>`+pig(110,268,.6,"hat","happy","bob")+pig(240,268,.6,"overalls","smile","bob")+`<g transform="translate(280 266)">${pig(0,0,.6,"builder","grin","bob")}<g transform="translate(16 -14)"><g class="hammer"><rect x="0" y="-3" width="26" height="6" fill="#8b5a2b" ${O}/><rect x="22" y="-10" width="11" height="18" rx="2" fill="#7f8c8d" ${O}/></g></g></g>`,
+()=>bg()+strawHouse(300,236)+pig(300,180,.0001,"hat")+`<g transform="translate(316 196)"><circle r="7" fill="#ffb6c9" ${O}/><circle cx="-2" cy="-1" r="2" fill="#2b1a10"/></g>`+wolf(170,214,1,"sly","sneak",false,true)+`<g class="gh-let">${bubble(150,110,"Little pig, let me in!",170)}</g>`+`<g class="knock gh-knock"><text x="245" y="180" font-size="16" font-weight="bold" fill="#2b1a10" font-family="Comic Sans MS,cursive">KNOCK!</text></g>`,
+()=>bg()+wolf(95,214,1,"sly","huff ga-wind",true,true)+`<g class="gh-wind">${windFx(140,150)}${bubble(100,92,"HUFF! PUFF!",120)}</g><g class="gh-blow">${debris("straw",12)}</g>`+`<g class="blow ga-blow">${strawHouse(300,236)}</g>`+`<g class="runoff ga-blow">${pig(320,262,.65,"hat","scared","run ga-blow")}<g class="gh-blow">${dust(350,272)}</g></g>`,
+()=>bg()+wolf(95,214,1,"sly","huff ga-wind",true,true)+`<g class="gh-wind">${windFx(140,150)}</g><g class="gh-blow">${debris("sticks",12)}</g>`+`<g class="blow ga-blow">${stickHouse(300,236)}</g>`+`<g class="runoff ga-run">${pig(300,262,.65,"overalls","scared","run ga-run")}${pig(350,264,.62,"hat","scared","run ga-run")}<g class="gh-run">${dust(375,274)}</g></g>`,
+()=>bg()+wolf(95,214,1,"sly","strain ga-wind",true,true)+`<g class="gh-wind">${windFx(140,150)}</g>`+brickHouse(310,244)+`<g transform="translate(272 205)"><circle r="7" fill="#ffb6c9" ${O}/><circle cx="1" r="2" fill="#2b1a10"/></g>`+`<g class="gh-not">${bubble(310,110,"Can't blow this!",130)}</g>`+`<g class="sweat gh-wind"><path d="M66 150 q-4 8 0 10 q4 -2 0 -10z" fill="#7fd3ff" stroke="#2b1a10" stroke-width="1.5"/></g>`,
+()=>DEFS+`<rect width="400" height="300" fill="url(#kitchen)"/><rect y="236" width="400" height="64" fill="#a8693a" ${O}/>${[0,50,100,150,200,250,300,350].map(i=>`<path d="M${i} 236 v64" stroke="#8a522a" stroke-width="2"/>`).join("")}<rect x="160" y="-10" width="80" height="130" fill="#7a3b2e" ${O}/><rect x="150" y="110" width="100" height="16" fill="#5a271d" ${O}/><rect x="30" y="40" width="70" height="56" fill="#bfeaff" ${O}/><path d="M65 40 v56 M30 68 h70" stroke="#2b1a10" stroke-width="3"/><path d="M26 36 q40 22 78 0 v10 q-40 18 -78 0z" fill="#ff6b9d" ${O}/>
+<path d="M150 210 q0 -22 30 -30 q20 6 40 0 q30 8 30 30 l-8 40 q-42 12 -84 0z" fill="none"/>`+`<g class="drop gh-drop">${wolf(200,30,.55,"ouch","")}</g>`+`<path d="M140 190 h120 l-10 56 q-50 12 -100 0z" fill="#3d3d4a" ${O}/><path d="M146 196 h108" stroke="#5a5a6a" stroke-width="4"/><ellipse cx="200" cy="190" rx="62" ry="12" fill="#ff8c1a" ${O}/><g class="splash gh-splash" fill="#ffb347" ${O}><path d="M160 186 q-14 -24 -4 -30 q4 14 14 24z"/><path d="M240 186 q14 -24 4 -30 q-4 14 -14 24z"/><circle cx="150" cy="160" r="5"/><circle cx="252" cy="158" r="5"/></g><g fill="#fff" opacity=".85"><circle class="steam" cx="180" cy="170" r="9"/><circle class="steam" cx="205" cy="165" r="12" style="animation-delay:.6s"/><circle class="steam" cx="228" cy="172" r="8" style="animation-delay:1.1s"/></g><path d="M150 252 q12 -14 24 0 q12 -18 26 0 q12 -14 24 0 q10 -12 24 0" fill="#ff5722" ${O} class="flame"/>`+pig(60,250,.7,"hat","scared","bob",false)+pig(345,250,.7,"builder","grin","bob",true)+`<text x="200" y="150" font-size="30" font-weight="900" text-anchor="middle" fill="#ff4d6d" stroke="#2b1a10" stroke-width="2" font-family="Impact,Comic Sans MS,sans-serif" class="pop gh-splash">SPLASH!</text>`,
+()=>bg()+brickHouse(340,244)+`<g class="flee ga-ran">${wolf(110,208,.6,"ouch","run")}${dust(150,236)}<g transform="translate(60 160)"><circle class="steam" r="6" fill="#fff"/></g></g>`+pig(150,248,.95,"hat","happy","dance ga-happy")+pig(220,250,.95,"overalls","happy","dance2 ga-happy")+pig(290,248,.95,"builder","grin","dance ga-happy")+`<g class="gh-happy">${confetti()}</g>`+`<text x="200" y="70" font-size="34" font-weight="900" text-anchor="middle" fill="#ffd23a" stroke="#2b1a10" stroke-width="2.5" font-family="Comic Sans MS,Chalkboard SE,cursive" class="pop gh-end">The End!</text>`
+];
+// ---------- word triggers ----------
+const TRIG=[{},{b1:"straw",b2:"sticks",b3:"bricks"},{knock:"knocked",let:"let"},{wind:"huff",blow:"blew"},{wind:"huffed",blow:"flew",run:"ran"},{wind:"huffed",not:"not"},{drop:"chimney",splash:"splash"},{ran:"ran",happy:"happily",end:"end"}];
+(function(){const N=new Set();TRIG.forEach(t=>Object.keys(t).forEach(k=>N.add(k)));let css="";N.forEach(n=>{css+=`#scene:not(.on-${n}) .gh-${n}{visibility:hidden;animation:none!important}#scene:not(.on-${n}) .gh-${n} *{animation:none!important}#scene:not(.on-${n}) .ga-${n}{animation:none!important}`});const st=document.createElement("style");st.textContent=css;document.head.appendChild(st)})();
+let trigIdx={};function computeTriggers(){trigIdx={};const t=TRIG[page]||{};for(const k in t){const i=targets.indexOf(t[k]);trigIdx[k]=i<0?targets.length-1:i}}
+function applyTriggers(){const sc=document.getElementById("scene");for(const k in trigIdx)sc.classList.toggle("on-"+k,ptr>trigIdx[k])}
+// ---------- matching logic ----------
+const norm=s=>s.toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(Boolean);
+function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+const NUM={one:"1",two:"2",three:"3",won:"1",to:"2",too:"2",for:"4"};
+function similar(a,b){if(a===b)return true;if(NUM[a]===b||NUM[b]===a)return true;const L=Math.max(a.length,b.length);if(L<=3)return lev(a,b)<=(L===3?1:0)||a.replace(/s$/,"")===b.replace(/s$/,"");return lev(a,b)<=(L<=6?1:2)}
+// advance pointer `ptr` over target words given heard words; returns new ptr (never decreases)
+function matchWords(target,ptr,heard,lookahead=3){
+  for(const h of heard){if(ptr>=target.length)break;
+    for(let k=0;k<=lookahead&&ptr+k<target.length;k++){if(similar(h,target[ptr+k])){ptr=ptr+k+1;break}}
+  }return ptr}
+function pageDone(ptr,len){return len>0&&ptr/len>=0.9}
+// ---------- UI ----------
+let page=0,ptr=0,targets=[],consumed=0,lastFinalPtr=0,advanceTimer=null;
+const $=id=>document.getElementById(id);
+function render(){targets=norm(PAGES[page]);ptr=0;lastFinalPtr=0;consumed=0;
+  const raw=PAGES[page].split(/\s+/);// display tokens aligned with norm tokens
+  $("words").innerHTML=raw.map((w,i)=>`<span class="w" data-i="${i}">${w.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</span>`).join(" ");
+  $("scene").innerHTML=`<svg viewBox="0 0 400 300" class="fade" aria-label="Scene ${page+1}">${SCENES[page]()}</svg>`;
+  $("pg").textContent=`Page ${page+1} / ${PAGES.length}`;document.getElementById("scene").className="panel";computeTriggers();paint()}
+function paint(){document.querySelectorAll(".w").forEach((el,i)=>{el.classList.toggle("lit",i<ptr);el.classList.toggle("next",i===ptr)});applyTriggers()}
+function setPtr(p){if(p<=ptr)return;ptr=Math.min(p,targets.length);paint();
+  if((pageDone(ptr,targets.length)||ptr>=targets.length)&&!advanceTimer){ptr=targets.length;paint();
+    advanceTimer=setTimeout(()=>{advanceTimer=null;if(page<PAGES.length-1){page++;render();resetStream()}},2600)}}
+function go(d){clearTimeout(advanceTimer);advanceTimer=null;page=Math.max(0,Math.min(PAGES.length-1,page+d));render();resetStream()}
+$("next").onclick=()=>go(1);$("back").onclick=()=>go(-1);
+$("restart").onclick=()=>{page=0;go(0)};
+$("words").addEventListener("click",e=>{const i=e.target.dataset&&e.target.dataset.i;if(i!=null)setPtr(+i+1)});
+// ---------- speech ----------
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false;
+// interim results repeat text; we re-match the current utterance from the pointer at last final result
+let streamBase=0;function resetStream(){streamBase=ptr;lastFinalPtr=ptr;if(rec&&listening){try{rec.abort()}catch(e){}}}
+function mic(on,t){$("dot").classList.toggle("on",on);$("micTxt").textContent=t;$("start").classList.toggle("on",listening);$("start").textContent=listening?"⏹ Stop Listening":"🎤 Start Listening"}
+function msg(t){$("msg").style.display=t?"block":"none";$("msg").textContent=t}
+if(!SR){msg("Voice reading isn't supported in this browser. Try Chrome (Android/PC) or Safari (iPad/iPhone). You can still tap words or use Next ▶.");$("start").disabled=true;$("start").style.opacity=.5}
+else{rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang="en-US";
+  rec.onstart=()=>mic(true,"Listening…");
+  rec.onresult=e=>{let fin="",intr="";for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=" "+t;else intr+=" "+t}
+    $("heard").textContent=(fin+intr).trim();
+    if(fin){const p=matchWords(targets,lastFinalPtr,norm(fin));lastFinalPtr=Math.max(p,ptr);setPtr(lastFinalPtr)}
+    if(intr){setPtr(matchWords(targets,Math.max(lastFinalPtr,0),norm(intr)))}};
+  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){listening=false;msg("Microphone permission was blocked. Allow the mic in your browser settings, or tap words to read along.")}mic(false,"Mic: "+e.error)};
+  rec.onend=()=>{lastFinalPtr=ptr;if(listening){setTimeout(()=>{try{rec.start()}catch(e){}},250)}else mic(false,"Mic off")};
+  $("start").onclick=()=>{if(listening){listening=false;rec.stop();mic(false,"Mic off")}else{listening=true;msg("");try{rec.start()}catch(e){}mic(true,"Starting…")}}}
+window.__test={norm,similar,matchWords,pageDone,PAGES,TRIG,get trigIdx(){return trigIdx},setPtr:p=>setPtr(p),go:d=>go(d)};
+render();
+</script></body></html>
