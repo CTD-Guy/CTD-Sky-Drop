@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Read-Along: The First Thanksgiving</title>
+<style>
+:root{--paper:#fff6e3;--ink:#4a2e1a;--lit:#ff9a1f;--glow:#ffd36b}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:radial-gradient(circle at 30% 20%,#fbe3b8,#e8b97a);font-family:Georgia,"Palatino Linotype",serif;color:var(--ink);display:flex;flex-direction:column;min-height:100vh}
+header{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.6rem 1rem}
+h1{font-size:clamp(1.1rem,2.6vw,1.8rem);margin:0}
+h1 small{display:block;font-size:.5em;font-weight:normal;opacity:.7;font-style:italic}
+.book{flex:1;display:grid;grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);gap:1rem;padding:0 1rem 1rem;min-height:0}
+@media (orientation:portrait),(max-width:760px){.book{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.panel{background:var(--paper);border-radius:22px;box-shadow:0 8px 24px #0003,inset 0 0 0 6px #f3dcae;padding:1rem;position:relative;overflow:hidden}
+#scene{display:flex;align-items:center;justify-content:center;padding:.7rem}
+#text{font-size:clamp(1.3rem,2.8vw,2.2rem);line-height:1.6;display:flex;flex-direction:column}
+#words{flex:1}
+.w{display:inline-block;padding:0 .12em;margin:0 .05em;border-radius:.3em;cursor:pointer;transition:all .25s}
+.w.trig{border-bottom:3px dotted #e0a030}
+.w.lit{color:#b34d00;background:var(--glow);box-shadow:0 0 14px var(--glow);transform:scale(1.04)}
+.w.next{border-bottom:3px dashed var(--lit)}
+.ctrl{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.6rem}
+button{font:inherit;font-size:1.05rem;border:0;border-radius:999px;padding:.6rem 1.1rem;background:#8a5a2b;color:#fff;cursor:pointer;box-shadow:0 3px 0 #5b3a1a}
+button:active{transform:translateY(2px);box-shadow:none}
+#start{font-size:1.3rem;padding:.8rem 1.6rem;background:#2e8b57;box-shadow:0 3px 0 #1d5c39}
+#start.on{background:#c0392b;box-shadow:0 3px 0 #7b2318}
+#mic{display:inline-flex;align-items:center;gap:.4rem;font-size:1rem}
+#dot{width:14px;height:14px;border-radius:50%;background:#999}
+#dot.on{background:#e74c3c;animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px #e74c3c33}}
+#msg{font-size:1rem;background:#fff1c9;border-radius:12px;padding:.5rem .8rem;margin:.4rem 1rem 0;display:none}
+#pg{font-size:1rem;opacity:.7}
+#heard{font-size:.9rem;opacity:.6;font-style:italic;min-height:1.2em}
+#hint{font-size:.85rem;opacity:.65;margin-top:.3rem}
+/* ---------- stage (art is generated stills; animation is CSS) ---------- */
+.stage{position:relative;aspect-ratio:4/3;width:100%;max-width:calc((100vh - 130px)*4/3);overflow:hidden;border-radius:16px;border:4px solid #151515;background:#222;box-shadow:0 4px 0 #0003}
+.stage .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.sp{position:absolute;transform:translateX(-50%)}
+.sp.abs{transform:none}
+.sp img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.sp.flip img{transform:scaleX(-1)}
+.act,.idle{transform-origin:50% 100%}
+.sp[data-mode=show]:not(.go){visibility:hidden}
+.idle.i-breathe{animation:breathe 2.4s ease-in-out infinite}
+.idle.i-bob{animation:bobi 1.6s ease-in-out infinite}
+.idle.i-sway{animation:swayi 3s ease-in-out infinite alternate}
+@keyframes breathe{0%,100%{transform:scale(1.015,.985)}50%{transform:scale(.985,1.02)}}
+@keyframes bobi{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(calc(var(--u)*-1)) rotate(.6deg)}}
+@keyframes swayi{from{transform:rotate(-1.5deg)}to{transform:rotate(1.5deg)}}
+/* trigger animations: nothing plays until .go is added (when the trigger phrase has been heard) */
+.go>.act.a-pop{animation:popin .7s cubic-bezier(.3,1.6,.6,1) var(--dl,0s) both}
+.go>.act.a-slide{animation:slidein var(--dur,1.8s) cubic-bezier(.2,.8,.3,1.08) var(--dl,0s) both}
+.go>.act.a-grow{animation:grow 1.1s cubic-bezier(.3,1.5,.6,1) var(--dl,0s) both}
+.go>.act.a-dropfade{animation:dropfade 1.1s ease-in var(--dl,0s) both}
+.go>.act.a-drop{animation:dropin .9s ease-in var(--dl,0s) both}
+.go>.act.a-move{animation:mv var(--dur,3s) var(--ease,ease-in-out) var(--dl,0s) both}
+.go>.act.a-shiver{animation:shiver .1s linear infinite alternate}
+.go>.act.a-jump{animation:jump .55s ease-in-out var(--dl,0s) 3}
+.go>.act.a-wobble{animation:wobble 1.4s ease-out var(--dl,0s) both}
+@keyframes popin{0%{transform:scale(0) rotate(-12deg)}60%{transform:scale(1.25) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes slidein{0%{transform:translate(var(--fx,0),var(--fy,0))}100%{transform:translate(0,0)}}
+@keyframes grow{0%{transform:scale(1,0)}60%{transform:scale(1.1,1.2)}100%{transform:scale(1,1)}}
+@keyframes dropfade{0%{transform:translateY(var(--fy)) rotate(-30deg);opacity:1}65%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(calc(var(--u)*2)) scale(.5);opacity:0}}
+@keyframes dropin{0%{transform:translateY(var(--fy))}70%{transform:translateY(0)}82%{transform:translateY(calc(var(--u)*-2.5)) scale(1,1.05)}100%{transform:translateY(0)}}
+@keyframes mv{to{transform:translate(var(--tx,0),var(--ty,0)) rotate(var(--rot,0deg))}}
+@keyframes shiver{from{transform:translateX(calc(var(--u)*-.5)) rotate(-1.4deg)}to{transform:translateX(calc(var(--u)*.5)) rotate(1.4deg)}}
+@keyframes jump{0%,100%{transform:translateY(0) scale(1,1)}20%{transform:translateY(0) scale(1.06,.92)}55%{transform:translateY(calc(var(--u)*-5.5)) scale(.94,1.1)}}
+@keyframes wobble{0%{transform:rotate(0)}15%{transform:rotate(9deg)}30%{transform:rotate(-7deg)}45%{transform:rotate(5deg)}60%{transform:rotate(-3deg)}100%{transform:rotate(0)}}
+/* fx text + speech bubbles */
+.fx{font-family:Impact,"Arial Black",sans-serif;font-size:calc(var(--u)*var(--fs,7));color:var(--c,#ffd23a);-webkit-text-stroke:calc(var(--u)*.55) #111;paint-order:stroke fill;text-shadow:0 calc(var(--u)*.7) 0 #111;white-space:nowrap;letter-spacing:.03em;transform:rotate(var(--r,-4deg))}
+.bub{position:relative;background:#fff;border:calc(var(--u)*.5) solid #111;border-radius:calc(var(--u)*2.8);padding:calc(var(--u)*1.1) calc(var(--u)*2.4);font:900 calc(var(--u)*3.8)/1.1 "Comic Sans MS","Chalkboard SE","Marker Felt",sans-serif;color:#111;white-space:nowrap}
+.bub:before,.bub:after{content:"";position:absolute;bottom:calc(var(--u)*-2.1);left:calc(var(--u)*3);border:solid transparent;border-width:calc(var(--u)*2.2) calc(var(--u)*1.6) 0 calc(var(--u)*1);border-top-color:#111}
+.bub:after{bottom:calc(var(--u)*-1.5);border-top-color:#fff;border-width:calc(var(--u)*1.9) calc(var(--u)*1.2) 0 calc(var(--u)*.8);left:calc(var(--u)*3.3)}
+.bub.tr:before,.bub.tr:after{left:auto;right:calc(var(--u)*3)}.bub.tr:after{right:calc(var(--u)*3.3)}
+/* weather / particles (hidden until triggered) */
+.layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.layer:not(.go){visibility:hidden}
+.flake{position:absolute;top:-6%;width:calc(var(--u)*1.7);height:calc(var(--u)*1.7);border-radius:50%;background:#fff;border:calc(var(--u)*.25) solid #7f9cc0;animation:fall linear infinite}
+@keyframes fall{0%{transform:translate(0,0)}50%{transform:translate(calc(var(--u)*3),calc(var(--u)*40))}100%{transform:translate(calc(var(--u)*-1),calc(var(--u)*84))}}
+.heart{position:absolute;top:-8%;font-size:calc(var(--u)*4.5);animation:fall linear infinite}
+.conf{position:absolute;top:-6%;width:calc(var(--u)*1.6);height:calc(var(--u)*2.6);animation:fall linear infinite,spinc 1s linear infinite}
+@keyframes spinc{to{rotate:360deg}}
+.gust i{position:absolute;left:-30%;height:calc(var(--u)*1.1);border-radius:99px;background:#fff;border:calc(var(--u)*.3) solid #9fd0f5;animation:gust 1.2s linear infinite}
+@keyframes gust{from{transform:translateX(0)}to{transform:translateX(calc(var(--u)*150))}}
+@media (orientation:portrait){#text{font-size:clamp(1.4rem,3.4vw,2.2rem)}}
+@media (prefers-reduced-motion:reduce){.idle{animation:none!important}}
+</style></head><body>
+<header><h1>📖 The First Thanksgiving<small>Plymouth, 1621 &middot; a parent reads, a child watches</small></h1>
+<div class="ctrl" style="margin:0"><button id="start">🎤 Start Listening</button><span id="mic"><span id="dot"></span><span id="micTxt">Mic off</span></span></div></header>
+<div id="msg"></div>
+<main class="book">
+ <section class="panel" id="scene"></section>
+ <section class="panel" id="text"><div id="words"></div><div id="heard"></div>
+  <div class="ctrl"><button id="back">◀ Back</button><button id="next">Next ▶</button><button id="restart">↺ Restart</button><span id="pg"></span></div>
+  <div id="hint">Read the words out loud. Say the dotted words to make the picture move!</div>
+ </section>
+</main>
+<script>
+"use strict";
+const A="first-thanksgiving-assets/";
+// ---------- story text. Short sentences for a parent to read aloud. (No hyphens/dashes: the word matcher splits on them.) ----------
+const PAGES=[
+"In 1620, a ship called the Mayflower sat on the big blue sea. The Pilgrims were on board. They were sailing to a brand new land! Then the wind blew, and off they sailed!",
+"It was a very hard winter. The snow fell and fell. The Pilgrims were cold, hungry, and tired. Brrr! Everyone shivered. But they helped each other and hoped for spring.",
+"One spring day, a man walked right into the village. His name was Samoset. He had learned some English from sailors. He smiled and said, \"Welcome!\"",
+"Samoset came back with a friend named Squanto. Squanto was kind and wise. He showed the Pilgrims how to grow corn. First, dig a hole. Then put in a fish. Now plant the corn!",
+"All summer, the corn grew tall and tall. Soon it was fall, time to harvest! The Pilgrims picked corn, beans, and pumpkins. The baskets were full! Everyone was so thankful.",
+"The Pilgrims planned a big harvest party. Massasoit, the leader of the Wampanoag, came to the party. He brought about ninety men! The Pilgrims gasped. That was a LOT of guests!",
+"There was not enough food for so many people. So the Wampanoag men went hunting. They came back with five deer to share! The Pilgrims cheered.",
+"Everyone sat down together. There was deer, and roasted birds called fowl, and corn, and pumpkin. The Wampanoag and the Pilgrims shared it all. Then they said, \"Let's eat!\"",
+"The feast lasted three whole days! They played games and ran races. The Wampanoag showed how to shoot a bow and arrow. Zing! Bullseye!",
+"When the feast was over, everyone was full and happy. They shared food, they shared games, and they shared thanks. And that is why we say thank you at Thanksgiving.",
+"Many years later, in 1863, President Abraham Lincoln made Thanksgiving a holiday for the whole country. Now every family can give thanks together. Happy Thanksgiving! The end."
+];
+// trigger key -> phrase. The key fires when the LAST word of the phrase has been heard (and not before).
+const TRIG=[
+ {crew:"were on board",wind:"the wind blew"},
+ {snow:"the snow fell",shiver:"everyone shivered"},
+ {enter:"a man walked",welcome:"said welcome"},
+ {fish:"put in a fish",corn:"plant the corn"},
+ {grow:"grew tall",full:"baskets were full"},
+ {crowd:"ninety men",gasp:"gasped"},
+ {deer:"five deer",cheer:"cheered"},
+ {eat:"lets eat"},
+ {zing:"zing",bull:"bullseye"},
+ {ty:"thank you"},
+ {lincoln:"abraham lincoln",happy:"happy thanksgiving"}
+];
+// ---------- scenes: background + sprites. x = centre (% of stage width), b = bottom (% of stage height), w = width (% of stage width)
+// t = trigger key. mode "show": hidden until trigger. mode "act": visible and still until trigger. a = animation, v = css vars, dl = delay
+const P=(n)=>({img:n});
+const char=(img,x,b,w,o={})=>Object.assign({img,x,b,w,idle:"breathe"},o);
+const SCENES=[
+// 1 Mayflower: the ship holds still until "the wind blew", then sails away
+{bg:"bg1_sea",sp:[
+ {h:'<div class="gust"><i style="top:18%;width:22%;animation-delay:0s"></i><i style="top:30%;width:30%;animation-delay:.3s"></i><i style="top:44%;width:18%;animation-delay:.6s"></i><i style="top:58%;width:26%;animation-delay:.15s"></i><i style="top:70%;width:20%;animation-delay:.8s"></i></div>',cls:"layer",t:"wind",mode:"show",z:5},
+ {img:"ship",x:33,b:14,w:46,idle:"bob",t:"wind",mode:"act",a:"move",v:"--tx:calc(var(--u)*85);--ty:calc(var(--u)*-3);--rot:4deg;--dur:4.6s;--ease:cubic-bezier(.5,0,.9,.6);--dl:.25s",z:2,
+  kids:[char("pip",56,36,13,{t:"crew",mode:"show",a:"pop"}),char("bill",41,36,14,{t:"crew",mode:"show",a:"pop",dl:".15s"})]},
+ {fx:"ALL ABOARD!",x:50,b:84,fs:7,c:"#ffd23a",t:"crew",mode:"show",a:"pop",z:6}
+]},
+// 2 hard winter
+{bg:"bg2_winter",sp:[
+ char("bill",24,5,19,{t:"shiver",mode:"act",a:"shiver"}),char("mabel",47,4,19,{t:"shiver",mode:"act",a:"shiver"}),char("pip",68,5,14,{t:"shiver",mode:"act",a:"shiver"}),
+ {fx:"BRRR!",x:50,b:76,fs:10,c:"#9fe3ff",t:"shiver",mode:"show",a:"pop",z:6},
+ {snow:44,cls:"layer",t:"snow",mode:"show",z:5}
+]},
+// 3 Samoset walks in
+{bg:"bg3_spring",sp:[
+ char("bill",20,6,19,{t:"welcome",mode:"act",a:"jump"}),char("pip",38,5,14,{t:"welcome",mode:"act",a:"jump",dl:".12s"}),
+ char("samoset",70,5,19,{t:"enter",mode:"show",a:"slide",v:"--fx:calc(var(--u)*55);--dur:2.4s"}),
+ {bub:"Welcome!",x:66,b:70,t:"welcome",mode:"show",a:"pop",z:6}
+]},
+// 4 Squanto teaches corn
+{bg:"bg4_field",sp:[
+ char("squanto",24,4,21,{flip:true}),char("pip",86,3,13,{flip:true}),
+ {img:"hole",x:58,b:16,w:22,z:1},
+ {img:"fish",x:58,b:62,w:14,t:"fish",mode:"show",a:"dropfade",v:"--fy:calc(var(--u)*-45)",z:3,fixbottom:true},
+ {img:"seedling",x:58,b:19,w:12,t:"corn",mode:"show",a:"grow",z:2},
+ {fx:"GROW!",x:58,b:60,fs:9,c:"#7dff7a",t:"corn",mode:"show",a:"pop",z:6}
+]},
+// 5 the harvest
+{bg:"bg5_harvest",sp:[
+ char("bill",13,3,17,{}),char("mabel",87,3,17,{flip:true}),
+ {img:"cornstalk",x:34,b:15,w:12,t:"grow",mode:"show",a:"grow",z:2},{img:"cornstalk",x:46,b:9,w:15,t:"grow",mode:"show",a:"grow",dl:".15s",z:3},
+ {img:"cornstalk",x:58,b:13,w:13,t:"grow",mode:"show",a:"grow",dl:".3s",z:2},{img:"cornstalk",x:70,b:8,w:16,t:"grow",mode:"show",a:"grow",dl:".45s",z:3},
+ {img:"basket",x:30,b:2,w:15,t:"full",mode:"show",a:"pop",z:4},{img:"pumpkin",x:50,b:1,w:11,t:"full",mode:"show",a:"pop",dl:".15s",z:4},{img:"corncobs",x:70,b:2,w:13,t:"full",mode:"show",a:"pop",dl:".3s",z:4},
+ {fx:"HARVEST!",x:50,b:84,fs:8,c:"#ffd23a",t:"full",mode:"show",a:"pop",z:6}
+]},
+// 6 Massasoit and about ninety men
+{bg:"bg6_hill",sp:[
+ char("bill",84,5,17,{flip:true,t:"gasp",mode:"act",a:"jump"}),char("mabel",68,3,17,{flip:true,t:"gasp",mode:"act",a:"jump",dl:".1s"}),
+ {fx:"!!",x:76,b:62,fs:12,c:"#ff5a5a",t:"gasp",mode:"show",a:"pop",z:6},
+ {crowd:true,t:"crowd",mode:"show",z:3,a:"slide",v:"--fx:calc(var(--u)*-75);--dur:2.6s"},
+ {fx:"90 MEN!",x:30,b:74,fs:9,c:"#ffd23a",t:"crowd",mode:"show",a:"pop",dl:"1.6s",z:6}
+]},
+// 7 five deer
+{bg:"bg6_hill",sp:[
+ char("bill",86,5,16,{flip:true,t:"cheer",mode:"act",a:"jump"}),char("pip",72,3,12,{flip:true,t:"cheer",mode:"act",a:"jump",dl:".1s"}),
+ {img:"deer_carriers",x:40,b:5,w:56,t:"deer",mode:"show",a:"slide",v:"--fx:calc(var(--u)*-75);--dur:2.2s",z:3,idle:"bob"},
+ {fx:"5 DEER!",x:38,b:76,fs:10,c:"#ffd23a",t:"deer",mode:"show",a:"pop",dl:"1.7s",z:6}
+]},
+// 8 the feast
+{bg:"bg7_feast",sp:[
+ char("bill",16,25,16,{t:"eat",mode:"act",a:"jump"}),char("mabel",31,25,16,{t:"eat",mode:"act",a:"jump",dl:".1s"}),char("pip",45,25,12,{t:"eat",mode:"act",a:"jump",dl:".2s"}),
+ char("samoset",59,25,16,{t:"eat",mode:"act",a:"jump",dl:".1s"}),char("squanto",73,25,16,{t:"eat",mode:"act",a:"jump",dl:".2s"}),char("massasoit",87,25,16,{t:"eat",mode:"act",a:"jump"}),
+ {img:"table",x:50,b:3,w:74,z:4},
+ {img:"turkey",x:40,b:33,w:15,t:"eat",mode:"show",a:"pop",z:5},{img:"venison",x:59,b:33,w:15,t:"eat",mode:"show",a:"pop",dl:".15s",z:5},
+ {img:"corncobs",x:24,b:33,w:11,t:"eat",mode:"show",a:"pop",dl:".3s",z:5},{img:"pumpkin",x:77,b:33,w:9,t:"eat",mode:"show",a:"pop",dl:".45s",z:5},{img:"basket",x:50,b:31,w:11,t:"eat",mode:"show",a:"pop",dl:".6s",z:6},
+ {bub:"Let's eat!",x:30,b:88,t:"eat",mode:"show",a:"pop",z:7}
+]},
+// 9 games and archery: the arrow holds still until "zing"
+{bg:"bg8_games",sp:[
+ char("man_pony",11,3,14,{flip:true}),char("man_bow",27,3,15,{flip:true}),char("pip",58,3,12,{t:"bull",mode:"act",a:"jump"}),
+ {img:"target",x:82,b:14,w:19,t:"bull",mode:"act",a:"wobble",dl:".05s",z:2},
+ {img:"arrow",x:41,b:30,w:12,t:"zing",mode:"act",a:"move",v:"--tx:calc(var(--u)*38);--dur:.38s;--ease:cubic-bezier(.4,0,1,1)",z:3,idle:""},
+ {fx:"ZING!",x:56,b:62,fs:8,c:"#7dd3ff",t:"zing",mode:"show",a:"pop",z:6},
+ {fx:"BULLSEYE!",x:50,b:84,fs:9,c:"#ffd23a",t:"bull",mode:"show",a:"pop",z:6}
+]},
+// 10 thank you
+{bg:"bg9_sunset",sp:[
+ char("bill",12,4,16,{t:"ty",mode:"act",a:"jump"}),char("mabel",27,4,16,{t:"ty",mode:"act",a:"jump",dl:".1s"}),char("pip",41,3,12,{t:"ty",mode:"act",a:"jump",dl:".2s"}),
+ char("samoset",57,4,16,{t:"ty",mode:"act",a:"jump",dl:".1s"}),char("squanto",72,4,16,{t:"ty",mode:"act",a:"jump",dl:".2s"}),char("massasoit",88,4,16,{t:"ty",mode:"act",a:"jump"}),
+ {fx:"THANK YOU!",x:50,b:76,fs:11,c:"#fff2a8",t:"ty",mode:"show",a:"pop",z:6},
+ {hearts:16,cls:"layer",t:"ty",mode:"show",z:5}
+]},
+// 11 Lincoln, 1863
+{bg:"bg10_whitehouse",sp:[
+ char("pip",56,3,13,{flip:true}),char("mabel",72,3,16,{flip:true}),char("bill",88,3,16,{flip:true}),
+ char("lincoln",32,3,15,{t:"lincoln",mode:"show",a:"slide",v:"--fx:calc(var(--u)*-60);--dur:1.8s"}),
+ {fx:"1863",x:30,b:66,fs:9,c:"#ffd23a",t:"lincoln",mode:"show",a:"pop",dl:"1.4s",z:6},
+ {fx:"HAPPY THANKSGIVING!",x:50,b:88,fs:5.6,c:"#fff2a8",t:"happy",mode:"show",a:"pop",z:6},
+ {confetti:40,cls:"layer",t:"happy",mode:"show",z:5}
+]}
+];
+// ---------- build the stage ----------
+const rnd=(i,s=1)=>{const x=Math.sin(i*127.1+s*311.7)*43758.5453;return x-Math.floor(x)};
+function crowdHTML(){ // Massasoit leads about ninety Wampanoag men (a crowd of figures walking right)
+  const rows=[ // [img,x,b,w,delay]
+   ["man_long",8,26,9],["man_bow",18,28,9],["man_pony",28,26,9],["man_long",38,28,9],["man_pony",48,27,9],["man_bow",58,28,8],
+   ["man_pony",6,16,11],["man_long",20,17,11],["man_bow",36,15,11],["man_pony",52,16,10],
+   ["massasoit",26,3,21]];
+  return rows.map(([n,x,b,w],i)=>`<div class="sp" style="left:${x}%;bottom:${b}%;width:${w}%;z-index:${Math.round(100-b)}"><div class="idle i-bob" style="animation-delay:${(i*.17).toFixed(2)}s;animation-duration:${(.7+rnd(i)*.3).toFixed(2)}s"><img src="${A}${n}.webp" style="transform:scaleX(${n==="massasoit"?1:-1})"></div></div>`).join("");
+}
+function spHTML(s,i){
+  const z=s.z!=null?`z-index:${s.z};`:"";
+  const mode=s.mode?` data-mode="${s.mode}"`:"";
+  const t=s.t?` data-t="${s.t}"`:"";
+  const vars=(s.v||"")+(s.dl?`;--dl:${s.dl}`:"");
+  const act=`<div class="act${s.a?" a-"+s.a:""}" style="${vars}${s.crowd?";position:absolute;inset:0":""}">`;
+  let inner="",pos="",cls="sp"+(s.flip?" flip":"");
+  if(s.cls==="layer"){cls="layer";pos=z}
+  else if(s.crowd){pos=`left:50%;bottom:0;width:100%;height:100%;${z}`}
+  else{pos=`left:${s.x}%;bottom:${s.b}%;${s.w?`width:${s.w}%;`:""}${z}`}
+  const idle=(s.idle===""?"":` i-${s.idle||"breathe"}`);
+  const idleStyle=idle?`style="animation-delay:${(rnd(i,3)*1.5).toFixed(2)}s"`:"";
+  if(s.img){inner=`<div class="idle${idle}" ${idleStyle}><img src="${A}${s.img}.webp" alt="">${(s.kids||[]).map(k=>spHTML(k,i+7)).join("")}</div>`}
+  else if(s.fx){inner=`<div class="fx" style="--fs:${s.fs||7};--c:${s.c||"#ffd23a"}">${s.fx}</div>`}
+  else if(s.bub){inner=`<div class="bub${s.tail==="r"?" tr":""}">${s.bub}</div>`}
+  else if(s.h){inner=s.h}
+  else if(s.snow){inner=Array.from({length:s.snow},(_,k)=>`<span class="flake" style="left:${(rnd(k)*100).toFixed(1)}%;animation-duration:${(3.2+rnd(k,2)*3).toFixed(1)}s;animation-delay:${(-rnd(k,5)*6).toFixed(1)}s"></span>`).join("")}
+  else if(s.hearts){inner=Array.from({length:s.hearts},(_,k)=>`<span class="heart" style="left:${(rnd(k)*100).toFixed(1)}%;animation-duration:${(3+rnd(k,2)*2.5).toFixed(1)}s;animation-delay:${(-rnd(k,5)*5).toFixed(1)}s">${["❤️","🧡","💛"][k%3]}</span>`).join("")}
+  else if(s.confetti){const C=["#ff4d6d","#ffd23a","#3b7dd8","#3fa34d","#b48cff","#ff8c1a"];inner=Array.from({length:s.confetti},(_,k)=>`<span class="conf" style="left:${(rnd(k)*100).toFixed(1)}%;background:${C[k%6]};animation-duration:${(2.2+rnd(k,2)*2).toFixed(1)}s,${(.6+rnd(k,4)).toFixed(1)}s;animation-delay:${(-rnd(k,5)*4).toFixed(1)}s,0s"></span>`).join("")}
+  else if(s.crowd){inner=crowdHTML()}
+  if(s.cls==="layer"){return `<div class="${cls}"${t}${mode} style="${pos}">${inner}</div>`}
+  // wrapper keeps position separate from animation transforms
+  return `<div class="${cls}"${t}${mode} style="${pos}">${act}${inner}</div></div>`;
+}
+function sceneHTML(n){const S=SCENES[n];return `<img class="bg" src="${A}${S.bg}.webp" alt="">`+S.sp.map(spHTML).join("")}
+// ---------- word triggers ----------
+let trigIdx={};
+function computeTriggers(){trigIdx={};const t=TRIG[page]||{};for(const k in t){const ph=norm(t[k]);let idx=-1;
+  for(let s=0;s+ph.length<=targets.length;s++){if(ph.every((w,j)=>targets[s+j]===w)){idx=s+ph.length-1;break}}
+  trigIdx[k]=idx<0?targets.length-1:idx}}
+function applyTriggers(){const st=$("scene").querySelector(".stage");if(!st)return;for(const k in trigIdx){if(ptr>trigIdx[k]){st.querySelectorAll(`[data-t="${k}"]:not(.go)`).forEach(e=>e.classList.add("go"))}}}
+// ---------- matching logic (same as the other read-alongs) ----------
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(Boolean);
+// speech engines say years as words; turn them back into digits so they match the page
+const normHeard=s=>norm(s.toLowerCase().replace(/sixteen[\s-]+twenty[\s-]+one/g,"1621").replace(/sixteen[\s-]+twenty/g,"1620").replace(/eighteen[\s-]+sixty[\s-]+three/g,"1863"));
+function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+const NUM={one:"1",two:"2",three:"3",won:"1",to:"2",too:"2",for:"4",ate:"8"};
+function similar(a,b){if(a===b)return true;if(NUM[a]===b||NUM[b]===a)return true;const L=Math.max(a.length,b.length);if(L<=3)return lev(a,b)<=(L===3?1:0)||a.replace(/s$/,"")===b.replace(/s$/,"");return lev(a,b)<=(L<=6?1:2)}
+function matchWords(target,ptr,heard,lookahead=3){
+  for(const h of heard){if(ptr>=target.length)break;
+    for(let k=0;k<=lookahead&&ptr+k<target.length;k++){if(similar(h,target[ptr+k])){ptr=ptr+k+1;break}}
+  }return ptr}
+function pageDone(ptr,len){return len>0&&ptr/len>=0.9}
+// ---------- UI ----------
+let page=0,ptr=0,targets=[],lastFinalPtr=0,advanceTimer=null;
+const $=id=>document.getElementById(id);
+function fitStage(){const st=$("scene").querySelector(".stage");if(st)st.style.setProperty("--u",(st.clientWidth/100)+"px")}
+window.addEventListener("resize",fitStage);
+function trigWordSet(){const set=new Set();const t=TRIG[page]||{};for(const k in t){const ph=norm(t[k]);const e=trigIdx[k];for(let j=0;j<ph.length;j++)set.add(e-ph.length+1+j)}return set}
+function render(){targets=norm(PAGES[page]);ptr=0;lastFinalPtr=0;computeTriggers();const tw=trigWordSet();
+  const raw=PAGES[page].split(/\s+/);
+  $("words").innerHTML=raw.map((w,i)=>`<span class="w${tw.has(i)?" trig":""}" data-i="${i}">${w.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</span>`).join(" ");
+  $("scene").innerHTML=`<div class="stage" aria-label="Scene ${page+1}">${sceneHTML(page)}</div>`;fitStage();
+  $("pg").textContent=`Page ${page+1} / ${PAGES.length}`;paint();
+  const nx=SCENES[page+1];if(nx){const pre=new Image();pre.src=A+nx.bg+".webp"}}
+function paint(){document.querySelectorAll(".w").forEach((el,i)=>{el.classList.toggle("lit",i<ptr);el.classList.toggle("next",i===ptr)});applyTriggers()}
+let stallTimer=null;
+// Auto-advance after ~90% of the words, but never snap past a trigger word the reader hasn't said yet:
+// a scene's key animation must wait for its phrase. (If the last word is never recognised, a 9s fallback finishes the page.)
+function setPtr(p){if(p<=ptr)return;ptr=Math.min(p,targets.length);paint();
+  const maxT=Math.max(-1,...Object.values(trigIdx));
+  if(ptr>=targets.length||(pageDone(ptr,targets.length)&&ptr>maxT)){
+    clearTimeout(stallTimer);stallTimer=null;
+    if(!advanceTimer){ptr=targets.length;paint();
+      advanceTimer=setTimeout(()=>{advanceTimer=null;if(!window.__noAuto&&page<PAGES.length-1){page++;render();resetStream()}},5200)}}
+  else if(pageDone(ptr,targets.length)&&!stallTimer){stallTimer=setTimeout(()=>{stallTimer=null;setPtr(targets.length)},9000)}}
+function go(d){clearTimeout(advanceTimer);advanceTimer=null;clearTimeout(stallTimer);stallTimer=null;page=Math.max(0,Math.min(PAGES.length-1,page+d));render();resetStream()}
+$("next").onclick=()=>go(1);$("back").onclick=()=>go(-1);
+$("restart").onclick=()=>{page=0;go(0)};
+$("words").addEventListener("click",e=>{const i=e.target.dataset&&e.target.dataset.i;if(i!=null)setPtr(+i+1)});
+// ---------- speech ----------
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false;
+function resetStream(){lastFinalPtr=ptr;if(rec&&listening){try{rec.abort()}catch(e){}}}
+function mic(on,t){$("dot").classList.toggle("on",on);$("micTxt").textContent=t;$("start").classList.toggle("on",listening);$("start").textContent=listening?"⏹ Stop Listening":"🎤 Start Listening"}
+function msg(t){$("msg").style.display=t?"block":"none";$("msg").textContent=t}
+if(!SR){msg("Voice reading isn't supported in this browser. Try Chrome (Android/PC) or Safari (iPad/iPhone). You can still tap words or use Next ▶.");$("start").disabled=true;$("start").style.opacity=.5}
+else{rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang="en-US";
+  rec.onstart=()=>mic(true,"Listening…");
+  rec.onresult=e=>{let fin="",intr="";for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=" "+t;else intr+=" "+t}
+    $("heard").textContent=(fin+intr).trim();
+    if(fin){const p=matchWords(targets,lastFinalPtr,normHeard(fin));lastFinalPtr=Math.max(p,ptr);setPtr(lastFinalPtr)}
+    if(intr){setPtr(matchWords(targets,Math.max(lastFinalPtr,0),normHeard(intr)))}};
+  rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){listening=false;msg("Microphone permission was blocked. Allow the mic in your browser settings, or tap words to read along.")}mic(false,"Mic: "+e.error)};
+  rec.onend=()=>{lastFinalPtr=ptr;if(listening){setTimeout(()=>{try{rec.start()}catch(e){}},250)}else mic(false,"Mic off")};
+  $("start").onclick=()=>{if(listening){listening=false;rec.stop();mic(false,"Mic off")}else{listening=true;msg("");try{rec.start()}catch(e){}mic(true,"Starting…")}}}
+window.__test={norm,normHeard,similar,matchWords,pageDone,PAGES,TRIG,SCENES,get trigIdx(){return trigIdx},get targets(){return targets},setPtr:p=>setPtr(p),go:d=>go(d),get page(){return page}};
+render();
+</script></body></html>
