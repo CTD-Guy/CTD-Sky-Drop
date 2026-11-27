@@ -55,6 +55,9 @@ body.intro .ctrl *,body.intro #zoom{pointer-events:none!important}
 #rcv{width:180px;height:180px;border:3px solid #111;border-radius:12px;background:#e9f5db}
 .stats{text-align:left;font-weight:700;font-size:14px;line-height:1.5}
 .hidden{display:none!important}
+.arcade{font-size:13px;font-weight:800;text-align:center;margin:8px 0 0}
+.arcade a{color:#c81d4a;text-decoration:none}
+.arcade a:hover{text-decoration:underline}
 </style></head><body>
 <canvas id="c"></canvas>
 <div class="hud">
@@ -89,6 +92,7 @@ body.intro .ctrl *,body.intro #zoom{pointer-events:none!important}
  <li><b>Hold breath</b> (left thumb, bottom-left) to steady the scope for a few seconds while the right thumb taps <b>FIRE</b>.</li>
  <li>Touch: drag to aim, tap buttons. PC: drag mouse to aim, click to fire, Shift = breath, scroll = zoom, arrows = turrets, Space = fire.</li>
  </ul>
+ <p class="arcade">#CTDArcade · <a href="index.html">Sky Drop</a> · <a href="hangman.html">Hangman</a> · <a href="bubble.html">Bubble Blow</a></p>
  <button class="btn" id="go">START</button>
 </div></div>
 <div class="overlay hidden" id="res"><div class="card">
@@ -96,6 +100,7 @@ body.intro .ctrl *,body.intro #zoom{pointer-events:none!important}
  <div class="rrow"><canvas id="rcv" width="360" height="360"></canvas>
  <div><div class="grade" id="rGrade">A</div><div class="stats" id="rStats"></div></div></div>
  <p id="rMsg" style="text-align:center;font-weight:900"></p>
+ <p class="arcade">#CTDArcade · <a href="index.html">Sky Drop</a> · <a href="hangman.html">Hangman</a> · <a href="bubble.html">Bubble Blow</a></p>
  <button class="btn" id="rNext">NEXT</button>
 </div></div>
 <script>

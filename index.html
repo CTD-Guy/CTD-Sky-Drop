@@ -138,6 +138,8 @@ canvas {
   line-height: 1.35;
   padding-bottom: calc(6px + env(safe-area-inset-bottom));
 }
+#arcade { margin-top: 4px; }
+#arcade a { color: var(--accent); font-weight: 700; text-decoration: none; pointer-events: auto; touch-action: manipulation; }
 #mute {
   position: absolute;
   right: 8px;
@@ -193,7 +195,7 @@ canvas {
       <button id="bChute" type="button">CHUTE / JUMP</button>
       <button id="bR" type="button">▶</button>
     </div>
-    <div id="hint">Hold ◀ ▶ to steer · CHUTE to jump / open · Keys: ←/→ or A/D, Space/↑, Enter to start</div>
+    <div id="hint">Hold ◀ ▶ to steer · CHUTE to jump / open · Keys: ←/→ or A/D, Space/↑, Enter to start<div id="arcade">#CTDArcade · <a href="sniper.html">Sniper Range</a> · <a href="hangman.html">Hangman</a> · <a href="bubble.html">Bubble Blow</a></div></div>
   </div>
 </div>
 <script>
