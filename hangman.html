@@ -41,7 +41,8 @@ main{width:100%;max-width:900px;display:flex;flex-wrap:wrap;gap:12px;justify-con
 .ans{font-size:24px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:2px}
 .btn{margin-top:14px;border:none;border-radius:99px;padding:14px 30px;font-size:19px;font-weight:800;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#1b0b33;cursor:pointer}
 #tools{display:flex;gap:8px}.sm{border:none;border-radius:99px;padding:8px 14px;background:rgba(255,255,255,.12);color:#fff;font-weight:700;cursor:pointer;font-size:14px}
-footer{font-size:12px;opacity:.55;padding:0 0 12px;text-align:center}
+footer{font-size:12px;opacity:.85;padding:0 0 12px;text-align:center}
+footer a{color:var(--acc);font-weight:800;text-decoration:none}
 #conf{position:fixed;inset:0;pointer-events:none;z-index:6}
 </style></head><body>
 <header><h1>HANGMAN</h1><div class="sub">with @TheCriticalDri1</div></header>
@@ -62,7 +63,7 @@ footer{font-size:12px;opacity:.55;padding:0 0 12px;text-align:center}
 <div id="tools"><button class="sm" id="hintBtn">💡 Hint (−5)</button><button class="sm" id="skipBtn">⏭ New word</button></div></div>
 </main>
 <div id="kb"></div>
-<footer>Type on your keyboard or tap the letters · <span id="left"></span></footer>
+<footer>Type on your keyboard or tap the letters · <span id="left"></span><div>#CTDArcade · <a href="index.html">Sky Drop</a> · <a href="sniper.html">Sniper Range</a> · <a href="bubble.html">Bubble Blow</a></div></footer>
 <div id="ov"><div class="card"><h2 id="ovT"></h2><p id="ovM"></p><p class="ans" id="ovA"></p><p id="ovS"></p><button class="btn" id="next">NEXT WORD ▶</button></div></div>
 <canvas id="conf"></canvas>
 <script>
